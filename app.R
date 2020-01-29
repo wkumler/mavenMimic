@@ -4,7 +4,7 @@ library(shiny)
 library(plotly)
 library(dplyr)
 
-load("raw_data_frame")
+#load("raw_data_frame")
 
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
@@ -27,14 +27,14 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
                       mode="lines", type="scatter",
                       colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
             add_trace(data = TIC_df, x=~rt, y=~TIC, 
-                      mode="lines", type="scatter", line=list(color="black"),
+                      mode="lines+markers", type="scatter", line=list(color="black"),
                       hoverinfo="none") %>%
             layout(xaxis = list(title = "Retention time (s)"),
                    yaxis = list(title = "Intensity",
                                 fixedrange = TRUE))
     } else {
         plot_ly(data = eic, x = ~rt, y = ~EIC_int, color = ~spindir, alpha = 0.5,
-                mode="lines", type="scatter",
+                mode="lines+markers", type="scatter",
                 colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone")),
                 source = "EIC") %>%
             layout(xaxis = list(title = "Retention time (s)"),
@@ -46,7 +46,7 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
 plotGivenScan <- function(ret, window=1, df=raw_data_frame){
     scandata <- df %>% 
         filter(rt>ret-window/2&rt<ret+window/2) %>% 
-        mutate(mz=round(mz*100)/100) %>%
+        mutate(mz=round(mz*10000)/10000) %>%
         group_by(mz) %>% 
         summarize(TIS=sum(int))
     plot_ly(source = "TIS") %>%
@@ -58,7 +58,8 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
                   marker=list(color="black")) %>%
         layout(xaxis = list(title = "m/z"),
                yaxis = list(title = "Intensity",
-                            fixedrange = TRUE))
+                            fixedrange = TRUE)) %>%
+        event_register("plotly_click")
 }
 
 # UI ----
@@ -96,12 +97,6 @@ server <- function(input, output) {
     })
     
     output$debug <- renderPrint({
-        TIS_data <- event_data(event = "plotly_click", source="TIS")
-        if(is.null(TIS_data)){
-            print("No data yet")
-        } else {
-            print(TIS_data$x)
-        }
     })
     
     output$TIS <- renderPlotly({
