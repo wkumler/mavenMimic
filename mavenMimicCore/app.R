@@ -50,7 +50,8 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
     plot_ly(data=scandata, x=~mz, y=~TIS, type = "bar", source = "TIS") %>%
         layout(xaxis = list(title = "m/z"),
                yaxis = list(title = "Intensity",
-                            fixedrange = TRUE))
+                            fixedrange = TRUE)) %>%
+        event_register("plotly_click")
 }
 
 # UI ----
@@ -69,7 +70,7 @@ ui <- fluidPage(
         # Show a plot of the generated distribution
         mainPanel(
            plotlyOutput("chrom"),
-           verbatimTextOutput("debug"),
+           #verbatimTextOutput("debug"),
            plotlyOutput("TIS")
         )
     )
@@ -79,19 +80,25 @@ ui <- fluidPage(
 server <- function(input, output) {
 
     output$chrom <- renderPlotly({
-        plotGivenEIC(input$given_mz, ppm=input$given_ppm)
+        TIS_data <- event_data(event = "plotly_click", source="TIS")
+        if(is.null(TIS_data)){
+            plotGivenEIC(input$given_mz, ppm=input$given_ppm)
+        } else {
+            plotGivenEIC(TIS_data$x, ppm=input$given_ppm)
+        }
     })
     
     output$debug <- renderPrint({
-        EIC_data <- event_data(event = "plotly_click", source = "EIC")
-        print(EIC_data)
+        #EIC_data <- event_data(event = "plotly_click", source = "EIC")
+        #print(dev.list())
+        #print(dev.cur())
     })
     
-    output$TIS <- renderPlot({
+    output$TIS <- renderPlotly({
         EIC_data <- event_data(event = "plotly_click", source = "EIC")
-        if (is.null(event_data)) {
-            plotly_empty()
-        } else { 
+        if (is.null(EIC_data)) {
+            plotly_empty(type="scatter", mode="markers")
+        } else {
             plotGivenScan(ret = EIC_data$x, window = 1)
         }
     })
