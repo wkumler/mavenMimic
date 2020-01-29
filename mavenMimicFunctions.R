@@ -39,7 +39,6 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
              yaxis = list(title = "Intensity",
                           fixedrange = TRUE))
   }
-
 }
 
 plotGivenScan <- function(ret, window=1, df=raw_data_frame){

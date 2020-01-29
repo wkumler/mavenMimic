@@ -4,6 +4,8 @@ library(shiny)
 library(plotly)
 library(dplyr)
 
+load("raw_data_frame")
+
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
@@ -75,7 +77,7 @@ ui <- fluidPage(
         # Show a plot of the generated distribution
         mainPanel(
            plotlyOutput("chrom"),
-           #verbatimTextOutput("debug"),
+           verbatimTextOutput("debug"),
            plotlyOutput("TIS")
         )
     )
@@ -94,6 +96,12 @@ server <- function(input, output) {
     })
     
     output$debug <- renderPrint({
+        TIS_data <- event_data(event = "plotly_click", source="TIS")
+        if(is.null(TIS_data)){
+            print("No data yet")
+        } else {
+            print(TIS_data$x)
+        }
     })
     
     output$TIS <- renderPlotly({
