@@ -47,11 +47,16 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
         mutate(mz=round(mz*100)/100) %>%
         group_by(mz) %>% 
         summarize(TIS=sum(int))
-    plot_ly(data=scandata, x=~mz, y=~TIS, type = "bar", source = "TIS") %>%
+    plot_ly(source = "TIS") %>%
+        add_trace(data=scandata, x=~mz, y=~TIS, 
+                  type = "bar", marker=list(color="black"),
+                  hoverinfo="none") %>%
+        add_trace(data=scandata, x=~mz, y=~TIS, 
+                  type="scatter", mode="markers", 
+                  marker=list(color="black")) %>%
         layout(xaxis = list(title = "m/z"),
                yaxis = list(title = "Intensity",
-                            fixedrange = TRUE)) %>%
-        event_register("plotly_click")
+                            fixedrange = TRUE))
 }
 
 # UI ----
@@ -89,9 +94,6 @@ server <- function(input, output) {
     })
     
     output$debug <- renderPrint({
-        #EIC_data <- event_data(event = "plotly_click", source = "EIC")
-        #print(dev.list())
-        #print(dev.cur())
     })
     
     output$TIS <- renderPlotly({
