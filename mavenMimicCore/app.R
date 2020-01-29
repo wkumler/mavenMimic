@@ -5,8 +5,6 @@ library(plotly)
 library(dplyr)
 
 # Functions ----
-
-
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
 plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
@@ -22,7 +20,7 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
             group_by(rt) %>% 
             summarize(TIC=sum(int)) %>%
             mutate(TIC=(TIC/max(TIC))*max(eic$EIC_int))
-        plot_ly() %>%
+        plot_ly(source = "EIC") %>%
             add_trace(data = eic, x = ~rt, y = ~EIC_int, color = ~spindir, opacity = 0.5,
                       mode="lines", type="scatter",
                       colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
@@ -35,7 +33,8 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
     } else {
         plot_ly(data = eic, x = ~rt, y = ~EIC_int, color = ~spindir, alpha = 0.5,
                 mode="lines", type="scatter",
-                colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
+                colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone")),
+                source = "EIC") %>%
             layout(xaxis = list(title = "Retention time (s)"),
                    yaxis = list(title = "Intensity",
                                 fixedrange = TRUE))
@@ -48,7 +47,7 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
         mutate(mz=round(mz*100)/100) %>%
         group_by(mz) %>% 
         summarize(TIS=sum(int))
-    plot_ly(data=scandata, x=~mz, y=~TIS, type = "bar") %>%
+    plot_ly(data=scandata, x=~mz, y=~TIS, type = "bar", source = "TIS") %>%
         layout(xaxis = list(title = "m/z"),
                yaxis = list(title = "Intensity",
                             fixedrange = TRUE))
@@ -56,11 +55,7 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
 
 # UI ----
 ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
+    titlePanel("mavenMimic"),
     sidebarLayout(
         sidebarPanel(
             numericInput(inputId = "given_mz",
@@ -73,8 +68,9 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("chrom"),
-           plotOutput("TIS")
+           plotlyOutput("chrom"),
+           verbatimTextOutput("debug"),
+           plotlyOutput("TIS")
         )
     )
 )
@@ -82,12 +78,22 @@ ui <- fluidPage(
 # Server ----
 server <- function(input, output) {
 
-    output$chrom <- renderPlot({
-        plot(10:1)
+    output$chrom <- renderPlotly({
+        plotGivenEIC(input$given_mz, ppm=input$given_ppm)
+    })
+    
+    output$debug <- renderPrint({
+        EIC_data <- event_data(event = "plotly_click", source = "EIC")
+        print(EIC_data)
     })
     
     output$TIS <- renderPlot({
-        plot(1:10)
+        EIC_data <- event_data(event = "plotly_click", source = "EIC")
+        if (is.null(event_data)) {
+            plotly_empty()
+        } else { 
+            plotGivenScan(ret = EIC_data$x, window = 1)
+        }
     })
 }
 
