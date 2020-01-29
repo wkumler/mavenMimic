@@ -19,6 +19,7 @@ ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
 sample_files <- list.files(ms_data_dir, pattern = "Smp", full.names = TRUE)
 
 raw_data <- pblapply(sample_files, grabSingleFileData)
+raw_data <- lapply(seq_along(raw_data), function(x){cbind(file=x, raw_data[[x]])})
 raw_data_frame <- as.data.frame(do.call(rbind, raw_data))
 
 save(raw_data_frame, file = "raw_data_frame")
