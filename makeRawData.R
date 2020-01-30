@@ -38,9 +38,7 @@ if(file.exists("falkor.db"))file.remove("falkor.db")
 if(!file.exists("falkor.db"))file.create("falkor.db")
 
 falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-for(i in raw_data){
-  dbWriteTable(do.call(rbind, raw_data), "raw_data", i, overwrite=TRUE)
-}
+dbWriteTable(do.call(rbind, raw_data), "raw_data", i, overwrite=TRUE)
 
 # Create TIC ----
 tic_query <- "SELECT fileid,rt,mz,SUM(int) FROM raw_data GROUP BY rt;"
