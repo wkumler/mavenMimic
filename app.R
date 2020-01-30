@@ -12,10 +12,10 @@ pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
     eic <- df %>% 
         filter(mz>min(pmppm(mass, ppm = ppm))&mz<max(pmppm(mass, ppm = ppm))) %>% 
-        group_by(file, rt) %>% 
+        group_by(fileid, rt) %>% 
         summarize(EIC_int=sum(int)) %>%
-        mutate(sample_group=c("DCM", "25m")[ceiling(file/3)%%2+1]) %>%
-        mutate(spindir=c("Cyclone", "Anticyclone")[(1-ceiling(file/12)%%2)+1])
+        mutate(sample_group=c("DCM", "25m")[ceiling(fileid/3)%%2+1]) %>%
+        mutate(spindir=c("Cyclone", "Anticyclone")[(1-ceiling(fileid/12)%%2)+1])
     if(plotTIC){
         TIC_df <- df %>% 
             mutate(rt=round(rt)) %>% 
@@ -46,7 +46,7 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plotTIC=FALSE){
 plotGivenScan <- function(ret, window=1, df=raw_data_frame){
     scandata <- df %>% 
         filter(rt>ret-window/2&rt<ret+window/2) %>% 
-        mutate(mz=round(mz*10000)/10000) %>%
+        mutate(mz=round(mz*1000)/1000) %>%
         group_by(mz) %>% 
         summarize(TIS=sum(int))
     plot_ly(source = "TIS") %>%
