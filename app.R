@@ -3,6 +3,7 @@
 library(shiny)
 library(plotly)
 library(dplyr)
+library(RSQLite)
 
 #load("raw_data_frame")
 

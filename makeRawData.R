@@ -30,4 +30,7 @@ raw_data_frame <- as.data.frame(do.call(rbind, raw_data))
 
 falkorDb <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
 dbWriteTable(falkorDb, "raw_data", raw_data_frame, overwrite=TRUE)
+dbListTables(falkorDb)
 dbDisconnect(falkorDb)
+
+dbGetQuery(falkorDb, "SELECT file,rt FROM raw_data_smol WHERE rt<121")
