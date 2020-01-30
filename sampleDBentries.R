@@ -1,31 +1,31 @@
 # Database examples
+# Setup things ----
 library(RSQLite)
 library(dplyr)
 library(plotly)
 library(ggplot2)
 
 # Functions ----
-
-
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
-plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE){
-  db_conn <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-  df <- dbGetQuery(db_conn, "SELECT * FROM raw_data_smol WHERE mz>? AND mz<?", 
+plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
+                         ms_data_dir="G:/My Drive/FalkorFactor/mzMLs"){
+  falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
+  df <- dbGetQuery(falkor_db, "SELECT * FROM raw_data WHERE mz>? AND mz<?", 
                        params=pmppm(mass, ppm = ppm))
-  dbDisconnect(db_conn)
-  eic <- df %>% group_by(file, rt) %>% summarize(EIC_int=sum(int))
+  eic <- df %>% group_by(fileid, rt) %>% summarize(int=sum(int))
+  eic$names <- list.files(ms_data_dir, pattern = "Smp|Blk")[eic$fileid]
+  eic$depth <- c("Cyclone", "Anticyclone")[1-grepl("62|64", eic$names)+1]
+  
+  tic <- dbGetQuery(falkor_db, "SELECT * FROM TIC")
+  tic$int <- (tic$int/max(tic$int))*max(eic$int)
+  dbDisconnect(falkor_db)
   if(plotTIC){
-    TIC_df <- df %>% 
-      mutate(rt=round(rt)) %>% 
-      group_by(rt) %>% 
-      summarize(TIC=sum(int)) %>%
-      mutate(TIC=(TIC/max(TIC))*max(eic$EIC_int))
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~EIC_int, color = ~spindir, opacity = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int, color = ~spindir, opacity = 0.5,
                 mode="lines", type="scatter",
                 colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
-      add_trace(data = TIC_df, x=~rt, y=~TIC, 
+      add_trace(data = tic, x=~rt, y=~int, 
                 mode="lines+markers", type="scatter", line=list(color="black"),
                 hoverinfo="none") %>%
       layout(xaxis = list(title = "Retention time (s)"),
@@ -64,14 +64,4 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
 
 
 # Applications ----
-falkorDb <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-dbListTables(falkorDb)
-bet_df <- dbGetQuery(falkorDb, "SELECT * FROM raw_data_smol WHERE mz>? AND mz<?", 
-                     params=pmppm(117.078979+1.007276))
-dbDisconnect(falkorDb)
-
-plotGivenEIC(117.078979+1.007276)
-
-db_conn <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-TIC <- dbGetQuery(db_conn, "SELECT rt,mz,SUM(int) FROM raw_data_smol GROUP BY rt;")
-dbDisconnect(db_conn)
+plotGivenEIC(mass = 118.086804, plotTIC = FALSE)
