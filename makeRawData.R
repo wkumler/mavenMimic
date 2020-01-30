@@ -1,6 +1,7 @@
 # Code to read MS data out of mzML files and into a more friendly, long-form csv
 
 library(pbapply)
+library(RSQLite)
 
 grabSingleFileData <- function(filename){
   msdata <- mzR:::openMSfile(filename)
@@ -17,9 +18,16 @@ grabSingleFileData <- function(filename){
 
 ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
 sample_files <- list.files(ms_data_dir, pattern = "Smp", full.names = TRUE)
+sample_spins <- c("Cyclone", "Anticyclone")[1-grepl("62|64", sample_files)+1]
+sample_depth <- c("25m", "DCM")[grepl("DCM", sample_files)+1]
 
 raw_data <- pblapply(sample_files, grabSingleFileData)
-raw_data <- lapply(seq_along(raw_data), function(x){cbind(file=x, raw_data[[x]])})
+raw_data <- lapply(seq_along(raw_data), function(x){
+  cbind(fileid=x, filename=basename(sample_files[x]), 
+        depth=sample_depth[x], spindir=sample_spins[x], raw_data[[x]])
+})
 raw_data_frame <- as.data.frame(do.call(rbind, raw_data))
 
-save(raw_data_frame, file = "raw_data_frame")
+falkorDb <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
+dbWriteTable(falkorDb, "raw_data", raw_data_frame, overwrite=TRUE)
+dbDisconnect(falkorDb)
