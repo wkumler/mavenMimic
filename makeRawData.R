@@ -1,8 +1,11 @@
-# Code to read MS data out of mzML files and into a more friendly, long-form csv
+# Code to read MS data out of mzML files and into a more database format
 
+# Setup things ----
 library(pbapply)
 library(RSQLite)
+init <- Sys.time()
 
+# Functions ----
 grabSingleFileData <- function(filename){
   msdata <- mzR:::openMSfile(filename)
   fullhd <- mzR::header(msdata)
@@ -16,21 +19,36 @@ grabSingleFileData <- function(filename){
   return(all_data)
 }
 
+# Metadata ----
 ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
-sample_files <- list.files(ms_data_dir, pattern = "Smp", full.names = TRUE)
+sample_files <- list.files(ms_data_dir, pattern = "Smp|Blk", full.names = TRUE)
 sample_spins <- c("Cyclone", "Anticyclone")[1-grepl("62|64", sample_files)+1]
 sample_depth <- c("25m", "DCM")[grepl("DCM", sample_files)+1]
 
+# Grab the actual data and clean up a little ----
 raw_data <- pblapply(sample_files, grabSingleFileData)
 raw_data <- lapply(seq_along(raw_data), function(x){
-  cbind(fileid=x, filename=basename(sample_files[x]), 
-        depth=sample_depth[x], spindir=sample_spins[x], raw_data[[x]])
+  raw_data[[x]]$rt <- format(raw_data[[x]]$rt, digits = 3)
+  cbind(fileid=x, raw_data[[x]])
 })
-raw_data_frame <- as.data.frame(do.call(rbind, raw_data))
 
-falkorDb <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-dbWriteTable(falkorDb, "raw_data", raw_data_frame, overwrite=TRUE)
-dbListTables(falkorDb)
-dbDisconnect(falkorDb)
+# Connect to database and write out data ----
+# NOTE: Make sure you've manually created falkor.db first
+if(file.exists("falkor.db"))file.remove("falkor.db")
+if(!file.exists("falkor.db"))file.create("falkor.db")
 
-dbGetQuery(falkorDb, "SELECT file,rt FROM raw_data_smol WHERE rt<121")
+falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
+for(i in raw_data){
+  dbWriteTable(do.call(rbind, raw_data), "raw_data", i, overwrite=TRUE)
+}
+
+# Create TIC ----
+tic_query <- "SELECT fileid,rt,mz,SUM(int) FROM raw_data GROUP BY rt;"
+dbWriteTable(dbGetQuery(db_conn, tic_query), "TIC")
+
+
+# Check on data export and disconnect ----
+dbListTables(falkor_db)
+dbDisconnect(falkor_db)
+
+print(Sys.time()-init)
