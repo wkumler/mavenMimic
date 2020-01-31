@@ -28,9 +28,9 @@ sample_depth <- c("25m", "DCM")[grepl("DCM", sample_files)+1]
 # Grab the actual data and clean up a little ----
 raw_data <- pblapply(sample_files, grabSingleFileData)
 raw_data <- lapply(seq_along(raw_data), function(x){
-  raw_data[[x]]$rt <- format(raw_data[[x]]$rt, digits = 3)
   cbind(fileid=x, raw_data[[x]])
 })
+raw_data <- do.call(rbind, raw_data)
 
 # Connect to database and write out data ----
 # NOTE: Make sure you've manually created falkor.db first
@@ -38,11 +38,11 @@ if(file.exists("falkor.db"))file.remove("falkor.db")
 if(!file.exists("falkor.db"))file.create("falkor.db")
 
 falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-dbWriteTable(do.call(rbind, raw_data), "raw_data", i, overwrite=TRUE)
+dbWriteTable(conn = falkor_db, name = "raw_data", value = raw_data, overwrite=TRUE)
 
 # Create TIC ----
 tic_query <- "SELECT fileid,rt,mz,SUM(int) FROM raw_data GROUP BY rt;"
-dbWriteTable(dbGetQuery(db_conn, tic_query), "TIC")
+dbWriteTable(falkor_db, "TIC", dbGetQuery(falkor_db, tic_query))
 
 
 # Check on data export and disconnect ----
