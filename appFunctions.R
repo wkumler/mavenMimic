@@ -14,12 +14,17 @@ metadframe <- data.frame(
   )
 
 # Raw file functions ----
+cat("Reading in raw data... ")
 raw_data_frame <- readRDS("raw_data_table")
+cat("Done\n")
+cat("Creating TIC... ")
 tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
   group_by(rt) %>% summarize(int=sum(int))
+cat("Done")
 
 plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, 
-                         mdframe = metadframe, plottic=TRUE){
+                         mdframe = metadframe, plottic=TRUE,
+                         plotby="depth"){
   eic <- df %>% 
     filter(mz>min(pmppm(mass, ppm = ppm))&mz<max(pmppm(mass, ppm = ppm))) %>% 
     group_by(fileid, rt) %>% 
@@ -28,18 +33,21 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame,
   if(plottic){
     tic$int <- (tic$int/max(tic$int))*max(eic$int)
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int, color = ~depth, alpha = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
                 mode="lines", type="scatter",
-                colors = setNames(c("red", "blue", "green"), unique(eic$depth))) %>%
+                colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
       add_trace(data = tic, x=~rt, y=~int, 
-                mode="lines", type="scatter", line=list(color="black"),
-                hoverinfo="none") %>%
+                mode="lines", type="scatter", 
+                line=list(color="black"),
+                name="TIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity"))
+             yaxis = list(title = "Intensity"),
+             title = paste("Mass range:", min(pmppm(mass, ppm = ppm)),
+                           "-", max(pmppm(mass, ppm = ppm))))
   } else {
-    plot_ly(data = eic, x = ~rt, y = ~int, color = ~depth, alpha = 0.5,
+    plot_ly(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter", source="EIC",
-            colors = setNames(c("red", "blue", "green"), unique(depth))) %>%
+            colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"))
   }
@@ -64,7 +72,8 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
 
 # Database functions ----
 plotGivenEIC_DB <- function(mass, ppm=5, db="falkor.db", plotTIC=TRUE,
-                            ms_data_dir="G:/My Drive/FalkorFactor/mzMLs"){
+                            ms_data_dir="G:/My Drive/FalkorFactor/mzMLs",
+                            mdframe=metadframe, plotby="depth"){
   falkor_db <- dbConnect(drv = RSQLite::SQLite(), db)
   df <- dbGetQuery(falkor_db, "SELECT * FROM raw_data WHERE mz>? AND mz<?", 
                    params=pmppm(mass, ppm = ppm))
@@ -80,18 +89,18 @@ plotGivenEIC_DB <- function(mass, ppm=5, db="falkor.db", plotTIC=TRUE,
   dbDisconnect(falkor_db)
   if(plotTIC){
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int, color = ~depth, alpha = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
                 mode="lines", type="scatter",
-                colors = setNames(c("red", "blue", "green"), unique(eic$depth))) %>%
+                colors = setNames(c("red", "blue", "green"), unique(eic[["plotby"]]))) %>%
       add_trace(data = tic, x=~rt, y=~int, 
                 mode="lines", type="scatter", line=list(color="black"),
                 hoverinfo="none") %>%
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"))
   } else {
-    plot_ly(data = eic, x = ~rt, y = ~int, color = ~depth, alpha = 0.5,
+    plot_ly(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter",
-            colors = setNames(c("red", "blue", "green"), unique(eic$depth)),
+            colors = setNames(c("red", "blue", "green"), unique(eic[["plotby"]])),
             source = "EIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"))
@@ -118,7 +127,8 @@ plotGivenScan_DB <- function(ret, window=1, db="falkor.db"){
     event_register("plotly_click")
 }
 
-plotGivenEIC(118.0865)
-plotGivenScan(345)
-plotGivenEIC_DB(118.0865)
-plotGivenScan_DB(345)
+# plotGivenEIC(118.0865)
+# plotGivenEIC(118.0865, plotby = "spindir")
+# plotGivenScan(345)
+# plotGivenEIC_DB(118.0865)
+# plotGivenScan_DB(345)

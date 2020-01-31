@@ -29,6 +29,7 @@ raw_data <- lapply(seq_along(raw_data), function(x){
   cbind(fileid=x, raw_data[[x]])
 })
 raw_data <- do.call(rbind, raw_data)
+raw_data <- raw_data[raw_data$rt>60&raw_data$rt<1100,]
 saveRDS(raw_data, file = "raw_data_table")
 
 # Connect to database and write out data ----
