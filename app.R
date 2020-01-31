@@ -5,10 +5,6 @@ library(shiny)
 
 source("appFunctions.R")
 
-raw_data_frame <- readRDS("raw_data_frame")
-tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
-  group_by(rt) %>% summarize(int=sum(int))
-
 # UI ----
 ui <- fluidPage(
     titlePanel("mavenMimic"),

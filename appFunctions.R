@@ -8,13 +8,17 @@ library(RSQLite)
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
 # Raw file functions ----
+raw_data_frame <- readRDS("raw_data_table")
+tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
+  group_by(rt) %>% summarize(int=sum(int))
+
 plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plottic=TRUE){
   eic <- df %>% 
     filter(mz>min(pmppm(mass, ppm = ppm))&mz<max(pmppm(mass, ppm = ppm))) %>% 
-    group_by(file, rt) %>% 
+    group_by(fileid, rt) %>% 
     summarize(int=sum(int)) %>%
-    mutate(sample_group=c("DCM", "25m")[ceiling(file/3)%%2+1]) %>%
-    mutate(spindir=c("Cyclone", "Anticyclone")[(1-ceiling(file/12)%%2)+1])
+    mutate(sample_group=c("DCM", "25m")[ceiling(fileid/3)%%2+1]) %>%
+    mutate(spindir=c("Cyclone", "Anticyclone")[(1-ceiling(fileid/12)%%2)+1])
   if(plottic){
     tic$int <- (tic$int/max(tic$int))*max(eic$int)
     plot_ly(source = "EIC") %>%
@@ -53,7 +57,7 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
 
 
 # Database functions ----
-plotGivenEIC_DB <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
+plotGivenEIC_DB <- function(mass, ppm=5, db="falkor.db", plotTIC=TRUE,
                             ms_data_dir="G:/My Drive/FalkorFactor/mzMLs"){
   falkor_db <- dbConnect(drv = RSQLite::SQLite(), db)
   df <- dbGetQuery(falkor_db, "SELECT * FROM raw_data WHERE mz>? AND mz<?", 
