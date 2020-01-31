@@ -49,7 +49,9 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame,
             mode="lines", type="scatter", source="EIC",
             colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity"))
+             yaxis = list(title = "Intensity"),
+             title = paste("Mass range:", min(pmppm(mass, ppm = ppm)),
+                           "-", max(pmppm(mass, ppm = ppm))))
   }
 }
 
@@ -96,14 +98,18 @@ plotGivenEIC_DB <- function(mass, ppm=5, db="falkor.db", plotTIC=TRUE,
                 mode="lines", type="scatter", line=list(color="black"),
                 hoverinfo="none") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity"))
+             yaxis = list(title = "Intensity"),
+             title = paste("Mass range:", min(pmppm(mass, ppm = ppm)),
+                           "-", max(pmppm(mass, ppm = ppm))))
   } else {
     plot_ly(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter",
             colors = setNames(c("red", "blue", "green"), unique(eic[["plotby"]])),
             source = "EIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity"))
+             yaxis = list(title = "Intensity"),
+             title = paste("Mass range:", min(pmppm(mass, ppm = ppm)),
+                           "-", max(pmppm(mass, ppm = ppm))))
   }
 }
 
