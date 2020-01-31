@@ -22,8 +22,6 @@ grabSingleFileData <- function(filename){
 # Metadata ----
 ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
 sample_files <- list.files(ms_data_dir, pattern = "Smp|Blk", full.names = TRUE)
-sample_spins <- c("Cyclone", "Anticyclone")[1-grepl("62|64", sample_files)+1]
-sample_depth <- c("25m", "DCM")[grepl("DCM", sample_files)+1]
 
 # Grab the actual data and clean up a little ----
 raw_data <- pblapply(sample_files, grabSingleFileData)
@@ -31,6 +29,7 @@ raw_data <- lapply(seq_along(raw_data), function(x){
   cbind(fileid=x, raw_data[[x]])
 })
 raw_data <- do.call(rbind, raw_data)
+saveRDS(raw_data, file = "raw_data_table")
 
 # Connect to database and write out data ----
 # NOTE: Make sure you've manually created falkor.db first
