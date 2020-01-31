@@ -10,17 +10,17 @@ ui <- fluidPage(
     titlePanel("mavenMimic"),
     sidebarLayout(
         sidebarPanel(
-            numericInput(inputId = "given_mz",
-                        "m/z:",
-                        value = 118.0868),
+            # numericInput(inputId = "given_mz",
+            #             "m/z:",
+            #             value = 118.0868),
             numericInput(inputId = "given_ppm",
                          "+/- (ppm)",
                          value = 50),
             radioButtons(inputId = "treatment", 
                          label = "Color by which?", 
                          selected = "depth", 
-                         choiceNames = c("Depth", "Spin direction"),
-                         choiceValues = c("depth", "spindir")),
+                         choiceNames = c("Depth", "Spin direction", "Time"),
+                         choiceValues = c("depth", "spindir", "time")),
             checkboxInput(inputId = "user_plottic",
                           label = "Plot a TIC on the graph?",
                           value = TRUE)
@@ -37,8 +37,6 @@ ui <- fluidPage(
 
 # Server ----
 server <- function(input, output) {
-  observeEvent(input$given_mz, {TIS_data <- NULL})
-
   output$chrom <- renderPlotly({
       suppressWarnings(TIS_data <- event_data(event = "plotly_click", source="TIS"))
       if(is.null(TIS_data)){

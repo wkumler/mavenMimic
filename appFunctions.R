@@ -10,7 +10,8 @@ metadframe <- data.frame(
   fileid=1:25, 
   filenames=list.files("G:/My Drive/FalkorFactor/mzMLs", pattern = "Smp|Blk"),
   depth=c("Blank", "DCM", "25m")[c(1, ceiling(1:24/3)%%2+2)],
-  spindir=c("Blank", "Cyclone", "Anticyclone")[c(1, (1-ceiling(1:24/12)%%2)+2)]
+  spindir=c("Blank", "Cyclone", "Anticyclone")[c(1, (1-ceiling(1:24/12)%%2)+2)],
+  time=c("Blank", "Morning", "Afternoon")[c(1, ceiling(1:24/6)%%2+2)]
   )
 
 # Raw file functions ----
@@ -22,7 +23,7 @@ tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
   group_by(rt) %>% summarize(int=sum(int))
 cat("Done")
 
-plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, 
+plotGivenEIC <- function(mass=118.0865, ppm=5, df=raw_data_frame, 
                          mdframe = metadframe, plottic=TRUE,
                          plotby="depth"){
   eic <- df %>% 
