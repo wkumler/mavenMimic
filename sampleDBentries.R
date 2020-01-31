@@ -17,28 +17,28 @@ plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
   eic$names <- list.files(ms_data_dir, pattern = "Smp|Blk")[eic$fileid]
   eic$depth <- c("Cyclone", "Anticyclone")[1-grepl("62|64", eic$names)+1]
   
-  tic <- dbGetQuery(falkor_db, "SELECT * FROM TIC")
+  tic <- dbGetQuery(falkor_db, "SELECT * FROM tic") %>% 
+    mutate(int=`SUM(int)`) %>% select(-`SUM(int)`) %>% 
+    mutate(rt=round(rt)) %>% group_by(rt) %>% summarise(int=sum(int))
   tic$int <- (tic$int/max(tic$int))*max(eic$int)
   dbDisconnect(falkor_db)
   if(plotTIC){
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int, color = ~spindir, opacity = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int, color = ~depth, opacity = 0.5,
                 mode="lines", type="scatter",
                 colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
       add_trace(data = tic, x=~rt, y=~int, 
-                mode="lines+markers", type="scatter", line=list(color="black"),
+                mode="lines", type="scatter", line=list(color="black"),
                 hoverinfo="none") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity",
-                          fixedrange = TRUE))
+             yaxis = list(title = "Intensity"))
   } else {
     plot_ly(data = eic, x = ~rt, y = ~EIC_int, color = ~spindir, alpha = 0.5,
             mode="lines+markers", type="scatter",
             colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone")),
             source = "EIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity",
-                          fixedrange = TRUE))
+             yaxis = list(title = "Intensity"))
   }
 }
 

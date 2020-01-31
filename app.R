@@ -29,15 +29,13 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plottic=TRUE){
                 mode="lines", type="scatter", line=list(color="black"),
                 hoverinfo="none") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity",
-                          fixedrange = TRUE))
+             yaxis = list(title = "Intensity"))
   } else {
     plot_ly(data = eic, x = ~rt, y = ~int, color = ~spindir, alpha = 0.5,
             mode="lines", type="scatter", source="EIC",
             colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity",
-                          fixedrange = TRUE))
+             yaxis = list(title = "Intensity"))
   }
 }
 
@@ -72,9 +70,9 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotlyOutput("chrom"),
+           plotlyOutput("chrom", height = "90%"),
            #verbatimTextOutput("debug"),
-           plotlyOutput("TIS")
+           plotlyOutput("TIS", height = "90%")
         )
     )
 )
