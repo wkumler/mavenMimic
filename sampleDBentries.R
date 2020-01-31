@@ -10,7 +10,7 @@ pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
 plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
                          ms_data_dir="G:/My Drive/FalkorFactor/mzMLs"){
-  falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
+  falkor_db <- dbConnect(drv = RSQLite::SQLite(), db)
   df <- dbGetQuery(falkor_db, "SELECT * FROM raw_data WHERE mz>? AND mz<?", 
                        params=pmppm(mass, ppm = ppm))
   eic <- df %>% group_by(fileid, rt) %>% summarize(int=sum(int))
@@ -24,7 +24,7 @@ plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
   dbDisconnect(falkor_db)
   if(plotTIC){
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int, color = ~depth, opacity = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int, color = ~depth, alpha = 0.5,
                 mode="lines", type="scatter",
                 colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
       add_trace(data = tic, x=~rt, y=~int, 
@@ -33,8 +33,8 @@ plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"))
   } else {
-    plot_ly(data = eic, x = ~rt, y = ~EIC_int, color = ~spindir, alpha = 0.5,
-            mode="lines+markers", type="scatter",
+    plot_ly(data = eic, x = ~rt, y = ~int, color = ~depth, alpha = 0.5,
+            mode="lines", type="scatter",
             colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone")),
             source = "EIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
@@ -42,17 +42,18 @@ plotGivenEIC <- function(mass, ppm=5, db="falkor.db", plotTIC=FALSE,
   }
 }
 
-plotGivenScan <- function(ret, window=1, df=raw_data_frame){
-  scandata <- df %>% 
-    filter(rt>ret-window/2&rt<ret+window/2) %>% 
-    mutate(mz=round(mz*1000)/1000) %>%
-    group_by(mz) %>% 
-    summarize(TIS=sum(int))
+plotGivenScan <- function(ret, window=1, db="falkor.db"){
+  falkor_db <- dbConnect(drv = RSQLite::SQLite(), db)
+  df <- dbGetQuery(falkor_db, "SELECT * FROM raw_data WHERE rt>? AND rt<?", 
+                   params=c(ret-window, ret+window))
+  dbDisconnect(falkor_db)
+  tis <- df %>% group_by(mz=round(mz, digits = 2)) %>% summarize(int=sum(int))
+  
   plot_ly(source = "TIS") %>%
-    add_trace(data=scandata, x=~mz, y=~TIS, 
+    add_trace(data=tis, x=~mz, y=~int, 
               type = "bar", marker=list(color="black"),
               hoverinfo="none") %>%
-    add_trace(data=scandata, x=~mz, y=~TIS, 
+    add_trace(data=tis, x=~mz, y=~int, 
               type="scatter", mode="markers", 
               marker=list(color="black")) %>%
     layout(xaxis = list(title = "m/z"),
@@ -64,4 +65,5 @@ plotGivenScan <- function(ret, window=1, df=raw_data_frame){
 
 
 # Applications ----
-plotGivenEIC(mass = 118.086804, plotTIC = FALSE)
+plotGivenEIC(mass = 118.086804, plotTIC = TRUE)
+plotGivenScan(ret=700)

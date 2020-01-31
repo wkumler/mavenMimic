@@ -22,7 +22,7 @@ plotGivenEIC <- function(mass, ppm=5, df=raw_data_frame, plottic=TRUE){
   if(plottic){
     tic$int <- (tic$int/max(tic$int))*max(eic$int)
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int, color = ~spindir, opacity = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int, color = ~spindir, alpha = 0.5,
                 mode="lines", type="scatter",
                 colors = setNames(c("blue", "green"), c("Cyclone", "Anticyclone"))) %>%
       add_trace(data = tic, x=~rt, y=~int, 
