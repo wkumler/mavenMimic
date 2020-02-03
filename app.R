@@ -26,7 +26,6 @@ ui <- fluidPage(
                           value = TRUE)
         ),
 
-        # Show a plot of the generated distribution
         mainPanel(
            plotlyOutput("chrom", height = "90%"),
            #verbatimTextOutput("debug"),
