@@ -10,9 +10,9 @@ ui <- fluidPage(
     titlePanel("mavenMimic"),
     sidebarLayout(
         sidebarPanel(
-            # numericInput(inputId = "given_mz",
-            #             "m/z:",
-            #             value = 118.0868),
+            numericInput(inputId = "given_mz",
+                        "m/z:",
+                        value = 118.0868),
             numericInput(inputId = "given_ppm",
                          "+/- (ppm)",
                          value = 50),
