@@ -1,4 +1,4 @@
-# Code to read MS data out of mzML files and into a more database format
+# Code to read MS data out of mzML files and into a database/dataframe format
 
 # Setup things ----
 library(pbapply)
@@ -19,6 +19,21 @@ grabSingleFileData <- function(filename){
   return(all_data)
 }
 
+grabSingleFileMS2 <- function(filename){
+  msdata <- mzR::openMSfile(filename)
+  fullhd <- mzR::header(msdata)
+  ms2rows <- seq_len(nrow(fullhd))[fullhd$msLevel>1]
+  spectra_list <- lapply(ms2rows, function(x){
+    rtime <- fullhd[x, "retentionTime"]
+    premz <- fullhd[x, "precursorMZ"]
+    fragments <- mzR::peaks(msdata, x)
+    return(cbind(rtime, premz, fragments))
+  })
+  all_data <- `names<-`(as.data.frame(do.call(rbind, spectra_list)), 
+                        c("rt", "premz", "fragmz", "int"))
+  return(all_data)
+}
+
 # Metadata ----
 ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
 sample_files <- list.files(ms_data_dir, pattern = "Smp|Blk", full.names = TRUE)
@@ -31,6 +46,17 @@ raw_data <- lapply(seq_along(raw_data), function(x){
 raw_data <- do.call(rbind, raw_data)
 raw_data <- raw_data[raw_data$rt>60&raw_data$rt<1100,]
 saveRDS(raw_data, file = "raw_data_table")
+
+# Grab MSMS data and clean up a little ----
+msms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs/MSMS"
+msms_files <- list.files(msms_data_dir, pattern = "DDApos", full.names = TRUE)
+raw_msmsdata <- pblapply(msms_files, grabSingleFileMS2)
+nrgs <- gsub(".*neg|.*pos|\\.mzML", "", msms_files)
+raw_msmsdata <- lapply(seq_along(raw_msmsdata), function(x){
+  cbind(nrg=nrgs[x], raw_msmsdata[[x]])
+})
+raw_msmsdata <- do.call(rbind, raw_msmsdata)
+saveRDS(raw_msmsdata, file = "raw_msms_table")
 
 # Connect to database and write out data ----
 # NOTE: Make sure you've manually created falkor.db first
