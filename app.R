@@ -3,22 +3,23 @@
 
 library(shiny)
 
-source("appFunctions.R")
-cat("Reading in raw data... ")
-raw_data_frame <- readRDS("raw_data_table")
-cat("Done\n")
-cat("Reading in MSMS data... ")
-raw_msms_data <- readRDS("raw_msms_table")
-cat("Done\n")
-cat("Creating TIC... ")
-tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
-  group_by(rt) %>% summarize(int=sum(int))
-cat("Done\n")
-cat("Reading in metadata... ")
-falkor_metadata <- read.csv("falkor_metadata.csv")
-cat("Done\n")
+# source("appFunctions.R")
+# cat("Reading in raw data... ")
+# raw_data_frame <- readRDS("raw_data_table")
+# cat("Done\n")
+# cat("Reading in MSMS data... ")
+# raw_msms_data <- readRDS("raw_msms_table")
+# cat("Done\n")
+# cat("Creating TIC... ")
+# tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
+#   group_by(rt) %>% summarize(int=sum(int))
+# cat("Done\n")
+# cat("Reading in metadata... ")
+# falkor_metadata <- read.csv("falkor_metadata.csv")
+# cat("Done\n")
 
 # Functions ----
+pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
 get_EIC <- function(raw_data_frame, mass, ppm=5, 
                     mdframe=falkor_metadata){
@@ -37,7 +38,8 @@ get_Spectrum <- function(raw_data_frame, scan, ret_window=1){
     summarize(TIS=sum(int))
 }
 
-plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL){
+plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
+                         current_mass=118.0865, ppm=5){
   if(plottic){
     tic$int <- (tic$int/max(tic$int))*max(eic$int)
     plot_ly(source = "EIC") %>%
@@ -50,13 +52,18 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL){
                 line=list(color="black"),
                 name="TIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity"))
+             yaxis = list(title = "Intensity"),
+             title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
+                           collapse = " - "))
   } else {
+    
     plot_ly(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter", source="EIC",
             colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
-             yaxis = list(title = "Intensity"))
+             yaxis = list(title = "Intensity"),
+             title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
+                           collapse = " - "))
   }
 }
 
@@ -90,14 +97,14 @@ ui <- fluidPage(
                          choiceValues = c("depth", "spindir", "time")),
             checkboxInput(inputId = "user_plottic",
                           label = "Plot a TIC on the graph?",
-                          value = TRUE)
+                          value = FALSE)
         ),
 
         mainPanel(
-          plotlyOutput("chrom", height = "80%"),
+          plotlyOutput(outputId = "chrom", height = "300px"),
           # verbatimTextOutput("debug"),
           # tableOutput("debug"),
-          plotlyOutput("TIS", height = "80%")
+          plotlyOutput(outputId = "TIS", height = "300px")
         )
     )
 )
@@ -111,9 +118,9 @@ server <- function(input, output, session) {
   observeEvent(input$given_mz, {
     current_mass(input$given_mz)
   })
-  observeEvent(current_mass(), {
-    updateNumericInput(session, "given_mz", value = current_mass())
-  })
+  # observeEvent(current_mass(), {
+  #   updateNumericInput(session, "given_mz", value = current_mass())
+  # })
   
   
   given_EIC <- reactive({
@@ -129,13 +136,13 @@ server <- function(input, output, session) {
     get_Spectrum(raw_data_frame = raw_data_frame, scan=EIC_data$x)
   })
   
-  # output$debug <- renderTable({head(given_Spectrum())})
-  
   output$chrom <- renderPlotly({
     plotGivenEIC(eic = given_EIC(), 
                  plotby = input$treatment,
                  plottic = input$user_plottic, 
-                 tic = tic)
+                 tic = tic,
+                 current_mass = current_mass(),
+                 ppm = input$given_ppm)
   })
 
   output$TIS <- renderPlotly({
