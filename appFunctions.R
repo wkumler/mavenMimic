@@ -7,13 +7,36 @@ library(RSQLite)
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
-plotMSMS <- function(mass, ppm=5, retwin=50, dataframe=raw_msms_data){
+plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=raw_msms_data){
   frags <- dataframe %>% 
-    filter(premz>min(pmppm(mass, ppm = ppm))&premz<max(pmppm(mass, ppm = ppm)))
+    filter(premz>min(pmppm(mass, ppm = ppm))) %>%
+    filter(premz<max(pmppm(mass, ppm = ppm))) %>%
+    filter(rt>ret_time-ret_win&rt<ret_time+ret_win)
+  if(!nrow(frags)){
+    empty_plot_ly <- plot_ly(x=ret_time, y=mass, 
+                             text="No data for any voltage here",
+                             mode="text", type="scatter") %>%
+      layout(title = paste(round(pmppm(mass, ppm), digits = 4), 
+                           collapse = " - "),
+             xaxis = list(range=c(ret_time-ret_win, ret_time+ret_win)),
+             yaxis = list(range=pmppm(mass, ppm)))
+    return(empty_plot_ly)
+  }
   pls <- lapply(split(frags, frags$nrg), function(given_frags){
     frags2plot <- given_frags %>%
       filter(int>max(int/10000)) %>%
       mutate(int=(int/max(int))*100)
+    if(!nrow(frags2plot)){
+      empty_plot_ly <- plot_ly(x=ret_time, y=50, 
+                               text=paste("No data for voltage", 
+                                          unique(given_frags$nrg), "here"),
+                               mode="text", type="scatter") %>%
+        layout(title = paste(round(pmppm(mass, ppm), digits = 4), 
+                             collapse = " - "),
+               xaxis = list(range=c(ret_time-ret_win, ret_time+ret_win)),
+               yaxis = list(range=c(0,100)))
+      return(empty_plot_ly)
+    }
     frag_lines <- lapply(seq_len(nrow(frags2plot)), function(x){
       line_obj <- list(type="line", xref="x", yref="y")
       line_obj$x0 <- frags2plot[x, "fragmz"]
@@ -36,19 +59,4 @@ plotMSMS <- function(mass, ppm=5, retwin=50, dataframe=raw_msms_data){
   })
   subplot(pls, shareX = TRUE, nrows = length(pls))
 }
-# plotMSMS(245.11)
-# 
-# frags20 <- frags[frags$nrg==50,]
-# split_msms <- split(frags20, frags20$rt)
-# for(i in seq_along(split_msms)){
-#   given_frags <- split_msms[[i]]
-#   print(plot(given_frags$fragmz, given_frags$int/max(given_frags$int),
-#              type="h", xlim=c(50, 140), ylim = c(0,1), main = paste0(
-#                "Retention time: ", round(unique(given_frags$rt), digits = 4),
-#                " Pre m/z: ", round(unique(given_frags$premz), digits = 4)
-#              )))
-# }
-# 
-# v <- cbind(frags20$fragmz[frags20$rt>250&frags20$rt<350],
-#            frags20$int[frags20$rt>250&frags20$rt<350])
-# apply(v, 1, function(x){cat(x); cat("\n")})
+plotMSMS(214.0897, ret_time = 1293)
