@@ -5,13 +5,13 @@ library(shiny)
 
 # source("appFunctions.R")
 # cat("Reading in raw data... ")
-# raw_data_frame <- readRDS("raw_data_table")
+# alldata <- readRDS("raw_data_table")
 # cat("Done\n")
 # cat("Reading in MSMS data... ")
 # raw_msms_data <- readRDS("raw_msms_table")
 # cat("Done\n")
 # cat("Creating TIC... ")
-# tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
+# tic <- alldata %>% mutate(rt=round(rt)) %>%
 #   group_by(rt) %>% summarize(int=sum(int))
 # cat("Done\n")
 # cat("Reading in metadata... ")
@@ -21,17 +21,17 @@ library(shiny)
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
-get_EIC <- function(raw_data_frame, mass, ppm=5, 
+get_EIC <- function(alldata, mass, ppm=5, 
                     mdframe=falkor_metadata){
-  raw_data_frame %>% 
+  alldata %>% 
     filter(mz>min(pmppm(mass, ppm = ppm))&mz<max(pmppm(mass, ppm = ppm))) %>% 
     group_by(fileid, rt) %>% 
     summarize(int=sum(int)) %>%
     left_join(mdframe, by="fileid")
 }
 
-get_Spectrum <- function(raw_data_frame, scan, ret_window=1){
-  raw_data_frame %>% 
+get_Spectrum <- function(alldata, scan, ret_window=1){
+  alldata %>% 
     filter(rt>scan-ret_window/2&rt<scan+ret_window/2) %>% 
     mutate(mz=round(mz*1000)/1000) %>% # Round to group nearby scans
     group_by(mz) %>% 
@@ -124,7 +124,7 @@ server <- function(input, output, session) {
   
   
   given_EIC <- reactive({
-    get_EIC(raw_data_frame = raw_data_frame, 
+    get_EIC(alldata = alldata, 
             mass = current_mass(), 
             ppm = input$given_ppm, 
             mdframe = falkor_metadata)
@@ -133,7 +133,7 @@ server <- function(input, output, session) {
   given_Spectrum <- reactive({
     EIC_data <- event_data(event = "plotly_click", source = "EIC")
     req(EIC_data)
-    get_Spectrum(raw_data_frame = raw_data_frame, scan=EIC_data$x)
+    get_Spectrum(alldata = alldata, scan=EIC_data$x)
   })
   
   output$chrom <- renderPlotly({
