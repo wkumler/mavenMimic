@@ -32,7 +32,7 @@ get_EIC <- function(raw_data_frame, mass, ppm=5,
 get_Spectrum <- function(raw_data_frame, scan, ret_window=1){
   raw_data_frame %>% 
     filter(rt>scan-ret_window/2&rt<scan+ret_window/2) %>% 
-    mutate(mz=round(mz*10000)/10000) %>% # Round to group nearby scans
+    mutate(mz=round(mz*1000)/1000) %>% # Round to group nearby scans
     group_by(mz) %>% 
     summarize(TIS=sum(int))
 }
@@ -96,7 +96,7 @@ ui <- fluidPage(
         mainPanel(
           plotlyOutput("chrom", height = "80%"),
           # verbatimTextOutput("debug"),
-          tableOutput("debug"),
+          # tableOutput("debug"),
           plotlyOutput("TIS", height = "80%")
         )
     )
@@ -104,10 +104,12 @@ ui <- fluidPage(
 
 # Server ----
 server <- function(input, output) {
-  current_mass <- reactive({
-    #suppressWarnings(TIS_data <- event_data(event = "plotly_click", source="TIS"))
-    TIS_data <- NULL
-    given_mz <- ifelse(is.null(TIS_data), given_mz <- input$given_mz, TIS_data$x)
+  current_mass <- reactiveVal(NULL)
+  observe({
+    current_mass(event_data(event = "plotly_click", source = "TIS")$x)
+  })
+  observeEvent(input$given_mz, {
+    current_mass(input$given_mz)
   })
   
   given_EIC <- reactive({
@@ -123,7 +125,7 @@ server <- function(input, output) {
     get_Spectrum(raw_data_frame = raw_data_frame, scan=EIC_data$x)
   })
   
-  output$debug <- renderTable({head(given_Spectrum())})
+  # output$debug <- renderTable({head(given_Spectrum())})
   
   output$chrom <- renderPlotly({
     plotGivenEIC(eic = given_EIC(), 
