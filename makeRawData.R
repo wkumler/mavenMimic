@@ -38,6 +38,15 @@ grabSingleFileMS2 <- function(filename){
 ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
 sample_files <- list.files(ms_data_dir, pattern = "Smp|Blk", full.names = TRUE)
 
+metadframe <- data.frame(
+  fileid=1:25, 
+  filenames=list.files("G:/My Drive/FalkorFactor/mzMLs", pattern = "Smp|Blk"),
+  depth=c("Blank", "DCM", "25m")[c(1, ceiling(1:24/3)%%2+2)],
+  spindir=c("Blank", "Cyclone", "Anticyclone")[c(1, (1-ceiling(1:24/12)%%2)+2)],
+  time=c("Blank", "Morning", "Afternoon")[c(1, ceiling(1:24/6)%%2+2)]
+)
+write.csv(metadframe, "falkor_metadata.csv", row.names = FALSE)
+
 # Grab the actual data and clean up a little ----
 raw_data <- pblapply(sample_files, grabSingleFileData)
 raw_data <- lapply(seq_along(raw_data), function(x){
