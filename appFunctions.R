@@ -26,17 +26,6 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=raw_msms_d
     frags2plot <- given_frags %>%
       filter(int>max(int/10000)) %>%
       mutate(int=(int/max(int))*100)
-    if(!nrow(frags2plot)){
-      empty_plot_ly <- plot_ly(x=ret_time, y=50, 
-                               text=paste("No data for voltage", 
-                                          unique(given_frags$nrg), "here"),
-                               mode="text", type="scatter") %>%
-        layout(title = paste(round(pmppm(mass, ppm), digits = 4), 
-                             collapse = " - "),
-               xaxis = list(range=c(ret_time-ret_win, ret_time+ret_win)),
-               yaxis = list(range=c(0,100)))
-      return(empty_plot_ly)
-    }
     frag_lines <- lapply(seq_len(nrow(frags2plot)), function(x){
       line_obj <- list(type="line", xref="x", yref="y")
       line_obj$x0 <- frags2plot[x, "fragmz"]
@@ -49,14 +38,26 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=raw_msms_d
       add_trace(data = frags2plot, x=~fragmz, y=~int,
         mode="markers", type="scatter", marker=list(color="#00000000")) %>%
       layout(xaxis = list(title = "m/z", range=c(0, max(frags2plot$fragmz)+5)),
-             yaxis = list(title = "Intensity"),
+             yaxis = list(title = "Intensity", range=c(0, 120)),
              shapes = frag_lines,
              title=paste0("Fragments for ", 
                           round(frags2plot[1, "premz"], digits = 4), 
                           " Da @ ~",
-                         round(mean(frags2plot$rt)), "seconds"))
+                         round(mean(frags2plot$rt)), "seconds"),
+             showlegend = FALSE) %>%
+      add_annotations(
+        text = paste("Voltage:", unique(frags2plot$nrg)),
+        x = 0.5,
+        y = 1,
+        yref = "paper",
+        xref = "paper",
+        xanchor = "middle",
+        yanchor = "top",
+        showarrow = FALSE,
+        font = list(size = 15)
+      )
     return(pl)
   })
   subplot(pls, shareX = TRUE, nrows = length(pls))
 }
-plotMSMS(214.0897, ret_time = 1293)
+plotMSMS(214.0905, ret_time = 1300)
