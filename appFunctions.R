@@ -173,19 +173,19 @@ plotMSMS <- function(mass, ppm=5, retwin=50, dataframe=raw_msms_data){
   })
   subplot(pls, shareX = TRUE, nrows = length(pls))
 }
-# plotMSMS(132.1019)
+# plotMSMS(245.11)
 # 
 # frags20 <- frags[frags$nrg==50,]
 # split_msms <- split(frags20, frags20$rt)
 # for(i in seq_along(split_msms)){
 #   given_frags <- split_msms[[i]]
-#   print(plot(given_frags$fragmz, given_frags$int/max(given_frags$int), 
+#   print(plot(given_frags$fragmz, given_frags$int/max(given_frags$int),
 #              type="h", xlim=c(50, 140), ylim = c(0,1), main = paste0(
-#                "Retention time: ", round(unique(given_frags$rt), digits = 4), 
+#                "Retention time: ", round(unique(given_frags$rt), digits = 4),
 #                " Pre m/z: ", round(unique(given_frags$premz), digits = 4)
 #              )))
 # }
 # 
-# v <- cbind(frags20$fragmz[frags20$rt>250&frags20$rt<350], 
+# v <- cbind(frags20$fragmz[frags20$rt>250&frags20$rt<350],
 #            frags20$int[frags20$rt>250&frags20$rt<350])
 # apply(v, 1, function(x){cat(x); cat("\n")})
