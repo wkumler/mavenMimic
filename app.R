@@ -5,17 +5,17 @@ library(shiny)
 
 source("appFunctions.R")
 cat("Reading in raw data... ")
-#raw_data_frame <- readRDS("raw_data_table")
+raw_data_frame <- readRDS("raw_data_table")
 cat("Done\n")
 cat("Reading in MSMS data... ")
-#raw_msms_data <- readRDS("raw_msms_table")
+raw_msms_data <- readRDS("raw_msms_table")
 cat("Done\n")
 cat("Creating TIC... ")
-# tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
-#   group_by(rt) %>% summarize(int=sum(int))
+tic <- raw_data_frame %>% mutate(rt=round(rt)) %>%
+  group_by(rt) %>% summarize(int=sum(int))
 cat("Done\n")
 cat("Reading in metadata... ")
-#falkor_metadata <- read.csv("falkor_metadata.csv")
+falkor_metadata <- read.csv("falkor_metadata.csv")
 cat("Done\n")
 
 # Functions ----
@@ -82,7 +82,7 @@ ui <- fluidPage(
                         value = 118.0868),
             numericInput(inputId = "given_ppm",
                          "+/- (ppm)",
-                         value = 50),
+                         value = 5),
             radioButtons(inputId = "treatment", 
                          label = "Color by which?", 
                          selected = "depth", 
@@ -103,7 +103,7 @@ ui <- fluidPage(
 )
 
 # Server ----
-server <- function(input, output) {
+server <- function(input, output, session) {
   current_mass <- reactiveVal(NULL)
   observe({
     current_mass(event_data(event = "plotly_click", source = "TIS")$x)
@@ -111,6 +111,10 @@ server <- function(input, output) {
   observeEvent(input$given_mz, {
     current_mass(input$given_mz)
   })
+  observeEvent(current_mass(), {
+    updateNumericInput(session, "given_mz", value = current_mass())
+  })
+  
   
   given_EIC <- reactive({
     get_EIC(raw_data_frame = raw_data_frame, 
