@@ -60,7 +60,7 @@ saveRDS(raw_data, file = "raw_data_table")
 msms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs/MSMS"
 msms_files <- list.files(msms_data_dir, pattern = "DDApos", full.names = TRUE)
 raw_msmsdata <- pblapply(msms_files, grabSingleFileMS2)
-nrgs <- gsub(".*neg|.*pos|\\.mzML", "", msms_files)
+nrgs <- as.numeric(gsub(".*neg|.*pos|\\.mzML", "", msms_files))
 raw_msmsdata <- lapply(seq_along(raw_msmsdata), function(x){
   cbind(nrg=nrgs[x], raw_msmsdata[[x]])
 })
