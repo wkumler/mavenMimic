@@ -84,5 +84,14 @@ and the below lines from the server:
 
 and it'll function nicely without the MS2 data.
 
-## Running the app
+## Hard restart instructions
 
+All of the data should be 100% reproducible, given access to the initial data files.
+
+Step 1. Run `RunMsconvert.cmd` command to convert .RAW files from the network drive to .mzMLs in the project directory subfolder mzMLs.
+
+Step 2. Update `makeRawData.R` to point to the mzML folder and update the metadata.
+
+Step 3. Update `app.R` to reflect any name changes to the objects in the Data folder.
+
+Step 4. Run `app.R`.
