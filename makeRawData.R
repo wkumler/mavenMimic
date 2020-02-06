@@ -59,7 +59,7 @@ raw_data <- raw_data[raw_data$rt>60&raw_data$rt<1100,]
 saveRDS(raw_data, file = "Data/MS1_data_frame")
 
 # Grab MSMS data and clean up a little ----
-msms_data_dir <- "mzMLs/MSMS"
+msms_data_dir <- "falkor_mzMLs/MSMS"
 msms_files <- list.files(msms_data_dir, pattern = "DDApos", full.names = TRUE)
 raw_msmsdata <- pblapply(msms_files, grabSingleFileMS2)
 nrgs <- as.numeric(gsub(".*neg|.*pos|\\.mzML", "", msms_files))

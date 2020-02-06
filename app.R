@@ -3,35 +3,34 @@
 
 library(shiny)
 
-# source("appFunctions.R")
-# cat("Reading in raw data... ")
-# alldata <- readRDS("raw_data_table")
-# cat("Done\n")
-# cat("Reading in MSMS data... ")
-# raw_msms_data <- readRDS("raw_msms_table")
-# cat("Done\n")
-# cat("Creating TIC... ")
-# tic <- alldata %>% mutate(rt=round(rt)) %>%
-#   group_by(rt) %>% summarize(int=sum(int))
-# cat("Done\n")
-# cat("Reading in metadata... ")
-# falkor_metadata <- read.csv("falkor_metadata.csv")
-# cat("Done\n")
+cat("Reading in raw data... ")
+MS1_data_frame <- readRDS("Data/MS1_data_frame")
+cat("Done\n")
+cat("Reading in MSMS data... ")
+MS2_data_frame <- readRDS("Data/MS2_data_frame")
+cat("Done\n")
+cat("Creating TIC... ")
+tic <- MS1_data_frame %>% mutate(rt=round(rt)) %>%
+  group_by(rt) %>% summarize(int=sum(int))
+cat("Done\n")
+cat("Reading in metadata... ")
+falkor_metadata <- read.csv("Data/falkor_metadata.csv")
+cat("Done\n")
 
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
-get_EIC <- function(alldata, mass, ppm=5, 
+get_EIC <- function(MS1_data_frame, mass, ppm=5, 
                     mdframe=falkor_metadata){
-  alldata %>% 
+  MS1_data_frame %>% 
     filter(mz>min(pmppm(mass, ppm = ppm))&mz<max(pmppm(mass, ppm = ppm))) %>% 
     group_by(fileid, rt) %>% 
     summarize(int=sum(int)) %>%
     left_join(mdframe, by="fileid")
 }
 
-get_Spectrum <- function(alldata, scan, ret_window=1){
-  alldata %>% 
+get_Spectrum <- function(MS1_data_frame, scan, ret_window=1){
+  MS1_data_frame %>% 
     filter(rt>scan-ret_window/2&rt<scan+ret_window/2) %>% 
     mutate(mz=round(mz*1000)/1000) %>% # Round to group nearby scans
     group_by(mz) %>% 
@@ -78,7 +77,7 @@ plotGivenSpectrum <- function(spectrum){
                         fixedrange = TRUE))
 }
 
-plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=raw_msms_data){
+plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_frame){
   frags <- dataframe %>% 
     filter(premz>min(pmppm(mass, ppm = ppm))) %>%
     filter(premz<max(pmppm(mass, ppm = ppm))) %>%
@@ -151,6 +150,9 @@ ui <- fluidPage(
                          choiceValues = c("depth", "spindir", "time")),
             checkboxInput(inputId = "user_plottic",
                           label = "Plot a TIC on the graph?",
+                          value = TRUE),
+            checkboxInput(inputId = "user_MSMS",
+                          label = "Add MSMS data?",
                           value = FALSE)
         ),
 
@@ -180,7 +182,7 @@ server <- function(input, output, session) {
   
   
   given_EIC <- reactive({
-    get_EIC(alldata = alldata, 
+    get_EIC(MS1_data_frame = MS1_data_frame, 
             mass = current_mass(), 
             ppm = input$given_ppm, 
             mdframe = falkor_metadata)
@@ -189,7 +191,7 @@ server <- function(input, output, session) {
   given_Spectrum <- reactive({
     EIC_data <- event_data(event = "plotly_click", source = "EIC")
     req(EIC_data)
-    get_Spectrum(alldata = alldata, scan=EIC_data$x)
+    get_Spectrum(MS1_data_frame = MS1_data_frame, scan=EIC_data$x)
   })
   
   output$chrom <- renderPlotly({
@@ -206,11 +208,12 @@ server <- function(input, output, session) {
   })
   
   output$MSMS <- renderPlotly({
+    req(input$user_MSMS)
     EIC_data <- event_data(event = "plotly_click", source = "EIC")
     req(EIC_data)
     plotMSMS(mass = current_mass(), ret_time = EIC_data$x, 
              ppm = input$given_ppm, ret_win = 20,
-             dataframe = raw_msms_data)
+             dataframe = MS2_data_frame)
   })
 }
 
