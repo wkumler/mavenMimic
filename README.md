@@ -38,5 +38,51 @@ with triplicate samples for each one explaining the missing fileid numbers. Addi
 
 MSMS data is handled separately in the next section of the script, where you'll again need to point to your MSMS data files in .mzML format
 
-`makeRawData` will produce 3 files from your .mzMLs. The first is simply a .csv file containing your metadata - it's usually a good idea to open this in a spreadsheet GUI and make sure everything looks okay. The next two are files produced by the calls to `saveRDS()`, which compresses the data to about a quarter of its size in memory. Reading and writing RDS is faster and safer than using the more general `save()` function.
+`makeRawData` will produce 3 files from your .mzMLs. The first is simply a .csv file containing your metadata - it's usually a good idea to open this in a spreadsheet GUI and make sure everything looks okay. The next two are files produced by the calls to `saveRDS()`, which compresses the data to about a quarter of its size in memory. Reading and writing RDS is faster and safer than using the more general `save()` function. When these files are loaded using `loadRDS()`, the data should be a simple data frame with 4 columns for MS1 data and 5 columns for MS2 data:
+
+### MS1 data (default name: raw_data_table)
+
+| fileid  | rt | mz | int |
+| ------- | --------- | ----- | ------- |
+| 1 | 60.25661 | 60.04510 | 41465.727 |
+| 1 | 60.25661 | 60.05813 | 9636.746 |
+| 1 | 60.25661 | 60.06448 | 16870.303 |
+| 1 | 60.25661 | 60.99581 | 7046.725 |
+| 1 | 60.25661 | 61.04038 | 762803.000 |
+| 1 | 60.25661 | 61.50027 | 5937.636 |
+
+If you don't like my extraction method or have better ideas, feel free to do other things: as long as you can point the app to an MS1 data frame that looks like this, then it'll run.
+
+### MS2 data (default name: raw_msms_table)
+
+| nrg | rt | premz | mz | int |
+| --- | -- | ----- | -- | --- |
+| 20 | 0.4794087 | 214.0897 | 1465.727 |
+| 20 | 0.4794087 | 214.0897 | 636.746 |
+| 20 | 0.4794087 | 214.0897 | 870.303 |
+| 20 | 0.4794087 | 214.0897 | 462.725 |
+| 20 | 0.4794087 | 214.0897 | 62803.000 |
+| 20 | 0.4794087 | 214.0897 | 372.636 |
+
+If you don't have MS2 data, it should be easy enough to modify the app to run without it. Comment out the below lines from the UI:
+
+```r
+h2("Fragments of the selected ion: "),
+plotlyOutput(outputId = "MSMS", height = "300px")
+```
+and the below lines from the server:
+
+```r
+  output$MSMS <- renderPlotly({
+    EIC_data <- event_data(event = "plotly_click", source = "EIC")
+    req(EIC_data)
+    plotMSMS(mass = current_mass(), ret_time = EIC_data$x, 
+             ppm = input$given_ppm, ret_win = 20,
+             dataframe = raw_msms_data)
+  })
+```
+
+and it'll function nicely without the MS2 data.
+
+## Running the app
 
