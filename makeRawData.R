@@ -3,6 +3,10 @@
 # Setup things ----
 library(pbapply)
 
+if(!dir.exists("Data")){
+  dir.create("Data")
+}
+
 # Functions ----
 grabSingleFileData <- function(filename){
   msdata <- mzR:::openMSfile(filename)
@@ -33,17 +37,17 @@ grabSingleFileMS2 <- function(filename){
 }
 
 # Metadata ----
-ms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs"
-sample_files <- list.files(ms_data_dir, pattern = "Smp|Blk", full.names = TRUE)
+sample_files <- normalizePath(list.files("Falkor_mzMLs", pattern = "Smp|Blk", 
+                                         full.names = TRUE))
 
 metadframe <- data.frame(
   fileid=1:25, 
-  filenames=list.files("G:/My Drive/FalkorFactor/mzMLs", pattern = "Smp|Blk"),
+  filenames=basename(sample_files),
   depth=c("Blank", "DCM", "25m")[c(1, ceiling(1:24/3)%%2+2)],
   spindir=c("Blank", "Cyclone", "Anticyclone")[c(1, (1-ceiling(1:24/12)%%2)+2)],
   time=c("Blank", "Morning", "Afternoon")[c(1, ceiling(1:24/6)%%2+2)]
 )
-write.csv(metadframe, "falkor_metadata.csv", row.names = FALSE)
+write.csv(metadframe, "Data/falkor_metadata.csv", row.names = FALSE)
 
 # Grab the actual data and clean up a little ----
 raw_data <- pblapply(sample_files, grabSingleFileData)
@@ -52,10 +56,10 @@ raw_data <- lapply(seq_along(raw_data), function(x){
 })
 raw_data <- do.call(rbind, raw_data)
 raw_data <- raw_data[raw_data$rt>60&raw_data$rt<1100,]
-saveRDS(raw_data, file = "raw_data_table")
+saveRDS(raw_data, file = "Data/MS1_data_frame")
 
 # Grab MSMS data and clean up a little ----
-msms_data_dir <- "G:/My Drive/FalkorFactor/mzMLs/MSMS"
+msms_data_dir <- "mzMLs/MSMS"
 msms_files <- list.files(msms_data_dir, pattern = "DDApos", full.names = TRUE)
 raw_msmsdata <- pblapply(msms_files, grabSingleFileMS2)
 nrgs <- as.numeric(gsub(".*neg|.*pos|\\.mzML", "", msms_files))
@@ -63,4 +67,4 @@ raw_msmsdata <- lapply(seq_along(raw_msmsdata), function(x){
   cbind(nrg=nrgs[x], raw_msmsdata[[x]])
 })
 raw_msmsdata <- do.call(rbind, raw_msmsdata)
-saveRDS(raw_msmsdata, file = "raw_msms_table")
+saveRDS(raw_msmsdata, file = "Data/MS2_data_frame")
