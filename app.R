@@ -2,8 +2,9 @@
 # Setup things ----
 
 library(shiny)
+library(dplyr)
+library(plotly)
 
-# source("appFunctions.R")
 # cat("Reading in raw data... ")
 # alldata <- readRDS("raw_data_table")
 # cat("Done\n")
