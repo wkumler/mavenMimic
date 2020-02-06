@@ -3,6 +3,6 @@
 .RData
 .Ruserdata
 
-raw_data_table
-falkor.db
-raw_msms_table
+MS1_data_frame
+MS2_data_frame
+Falkor_mzMLs/
