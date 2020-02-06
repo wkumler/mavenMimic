@@ -37,7 +37,7 @@ grabSingleFileMS2 <- function(filename){
 }
 
 # Metadata ----
-sample_files <- normalizePath(list.files("Falkor_mzMLs", pattern = "Smp|Blk", 
+sample_files <- normalizePath(list.files("falkor_mzMLs", pattern = "Smp|Blk", 
                                          full.names = TRUE))
 
 metadframe <- data.frame(
