@@ -2,8 +2,6 @@
 
 # Setup things ----
 library(pbapply)
-library(RSQLite)
-init <- Sys.time()
 
 # Functions ----
 grabSingleFileData <- function(filename){
@@ -66,22 +64,3 @@ raw_msmsdata <- lapply(seq_along(raw_msmsdata), function(x){
 })
 raw_msmsdata <- do.call(rbind, raw_msmsdata)
 saveRDS(raw_msmsdata, file = "raw_msms_table")
-
-# Connect to database and write out data ----
-# NOTE: Make sure you've manually created falkor.db first
-if(file.exists("falkor.db"))file.remove("falkor.db")
-if(!file.exists("falkor.db"))file.create("falkor.db")
-
-falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
-dbWriteTable(conn = falkor_db, name = "raw_data", value = raw_data, overwrite=TRUE)
-
-# Create TIC ----
-tic_query <- "SELECT fileid,rt,mz,SUM(int) FROM raw_data GROUP BY rt;"
-dbWriteTable(falkor_db, "TIC", dbGetQuery(falkor_db, tic_query))
-
-
-# Check on data export and disconnect ----
-dbListTables(falkor_db)
-dbDisconnect(falkor_db)
-
-print(Sys.time()-init)

@@ -3,6 +3,27 @@
 # a checkbox to pull from database rather than memory and re-write
 # the reactive() functions in the app.
 
+# Code to create a database from a dataframe ----
+library(RSQLite)
+if(file.exists("falkor.db"))file.remove("falkor.db")
+if(!file.exists("falkor.db"))file.create("falkor.db")
+
+falkor_db <- dbConnect(drv = RSQLite::SQLite(), "falkor.db")
+dbWriteTable(conn = falkor_db, name = "raw_data", value = raw_data, overwrite=TRUE)
+
+# Create TIC
+tic_query <- "SELECT fileid,rt,mz,SUM(int) FROM raw_data GROUP BY rt;"
+dbWriteTable(falkor_db, "TIC", dbGetQuery(falkor_db, tic_query))
+
+
+# Check on data export and disconnect
+dbListTables(falkor_db)
+dbDisconnect(falkor_db)
+
+
+
+# Code to extract and plot data from a dataframe ----
+
 plotGivenEIC_DB <- function(mass, ppm=5, db="falkor.db", plotTIC=TRUE,
                             ms_data_dir="G:/My Drive/FalkorFactor/mzMLs",
                             mdframe=metadframe, plotby="depth"){
