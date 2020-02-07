@@ -2,9 +2,11 @@
 # Setup things ----
 
 library(shiny)
+library(dplyr)
+library(plotly)
 
 cat("Reading in raw data... ")
-MS1_data_frame <- readRDS("Data/MS1_data_frame")
+#MS1_data_frame <- readRDS("Data/MS1_data_frame")
 cat("Done\n")
 cat("Reading in MSMS data... ")
 MS2_data_frame <- readRDS("Data/MS2_data_frame")
