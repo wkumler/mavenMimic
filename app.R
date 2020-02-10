@@ -6,7 +6,7 @@ library(dplyr)
 library(plotly)
 
 cat("Reading in raw data... ")
-#MS1_data_frame <- readRDS("Data/MS1_data_frame")
+MS1_data_frame <- readRDS("Data/MS1_data_frame")
 cat("Done\n")
 cat("Reading in MSMS data... ")
 MS2_data_frame <- readRDS("Data/MS2_data_frame")
@@ -18,6 +18,11 @@ cat("Done\n")
 cat("Reading in metadata... ")
 falkor_metadata <- read.csv("Data/falkor_metadata.csv")
 cat("Done\n")
+cat("Reading in standards list... ")
+pos_stans <- read.csv("Data/falkor_pos_stans.csv")
+neg_stans <- read.csv("Data/falkor_neg_stans.csv")
+cat("Done\n")
+
 
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
@@ -155,15 +160,17 @@ ui <- fluidPage(
                           value = TRUE),
             checkboxInput(inputId = "user_MSMS",
                           label = "Add MSMS data?",
-                          value = FALSE)
+                          value = FALSE),
+            selectInput(inputId = "given_stan", 
+                        label = "Choose a standard:", 
+                        choices = pos_stans$Compound.Name, 
+                        selectize = TRUE, 
+                        selected = "Betaine")
         ),
 
         mainPanel(
-          h2("Extracted ion chromatogram: "),
           plotlyOutput(outputId = "chrom", height = "300px"),
-          h2("Ions identified in chosen scan: "),
           plotlyOutput(outputId = "TIS", height = "300px"),
-          h2("Fragments of the selected ion: "),
           plotlyOutput(outputId = "MSMS", height = "300px")
         )
     )
@@ -178,9 +185,13 @@ server <- function(input, output, session) {
   observeEvent(input$given_mz, {
     current_mass(input$given_mz)
   })
-  # observeEvent(current_mass(), {
-  #   updateNumericInput(session, "given_mz", value = current_mass())
-  # })
+  observeEvent(input$given_stan, {
+    stan_mass <- pos_stans$m.z[pos_stans$Compound.Name==input$given_stan]
+    current_mass(stan_mass)
+  })
+  observeEvent(current_mass(), {
+    updateNumericInput(session, "given_mz", value = current_mass())
+  })
   
   
   given_EIC <- reactive({
