@@ -75,7 +75,4 @@ stans <- read.csv(paste0("https://raw.githubusercontent.com/kheal/Example_Unta",
 clean_stans <- stans %>% filter(Column=="HILIC") %>% 
   select(c(Compound.Type, Compound.Name, Emperical.Formula, RT..min., 
            m.z, ionization_form, Fraction1))
-write.csv(x = filter(clean_stans, Fraction1=="HILICPos"), 
-          file = "Data/falkor_pos_stans.csv")
-write.csv(x = filter(clean_stans, Fraction1=="HILICNeg"), 
-          file = "Data/falkor_neg_stans.csv")
+write.csv(x = clean_stans, file = "Data/falkor_stans.csv")
