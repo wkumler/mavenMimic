@@ -19,8 +19,12 @@ cat("Reading in metadata... ")
 falkor_metadata <- read.csv("Data/falkor_metadata.csv")
 cat("Done\n")
 cat("Reading in standards list... ")
-pos_stans <- read.csv("Data/falkor_pos_stans.csv")
-neg_stans <- read.csv("Data/falkor_neg_stans.csv")
+stans_csv <- read.csv("Data/falkor_stans.csv")
+stans_namelist <- split(stans_csv, stans_csv$Fraction1) %>%
+  lapply(FUN = `[[`, "Compound.Name") %>%
+  lapply(FUN = sort) %>%
+  `names<-`(c("Negative mode", "Positive mode")) %>%
+  `[`(c(2,1))
 cat("Done\n")
 
 
@@ -163,8 +167,8 @@ ui <- fluidPage(
                           value = FALSE),
             selectInput(inputId = "given_stan", 
                         label = "Choose a standard:", 
-                        choices = pos_stans$Compound.Name, 
-                        selectize = TRUE, 
+                        choices = stans_namelist, 
+                        #selectize = TRUE, 
                         selected = "Betaine")
         ),
 
@@ -186,8 +190,8 @@ server <- function(input, output, session) {
     current_mass(input$given_mz)
   })
   observeEvent(input$given_stan, {
-    stan_mass <- pos_stans$m.z[pos_stans$Compound.Name==input$given_stan]
-    current_mass(stan_mass)
+    stan_mass <- stans_csv$m.z[stans_csv$Compound.Name==input$given_stan]
+    current_mass(as.numeric(as.character(stan_mass)))
   })
   observeEvent(current_mass(), {
     updateNumericInput(session, "given_mz", value = current_mass())
