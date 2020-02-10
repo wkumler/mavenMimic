@@ -68,3 +68,14 @@ raw_msmsdata <- lapply(seq_along(raw_msmsdata), function(x){
 })
 raw_msmsdata <- do.call(rbind, raw_msmsdata)
 saveRDS(raw_msmsdata, file = "Data/MS2_data_frame")
+# Grab standards file and clean up a little ----
+stans <- read.csv(paste0("https://raw.githubusercontent.com/kheal/Example_Unta",
+                         "rgeted_Metabolomics_Workflow/master/Ingalls_Lab_Stan",
+                         "dards.csv"))
+clean_stans <- stans %>% filter(Column=="HILIC") %>% 
+  select(c(Compound.Type, Compound.Name, Emperical.Formula, RT..min., 
+           m.z, ionization_form, Fraction1))
+write.csv(x = filter(clean_stans, Fraction1=="HILICPos"), 
+          file = "Data/falkor_pos_stans.csv")
+write.csv(x = filter(clean_stans, Fraction1=="HILICNeg"), 
+          file = "Data/falkor_neg_stans.csv")
