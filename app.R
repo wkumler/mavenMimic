@@ -4,12 +4,13 @@
 library(shiny)
 library(dplyr)
 library(plotly)
+library(data.table)
 
 cat("Reading in raw data... ")
-MS1_data_frame <- readRDS("Data/MS1_data_frame")
+MS1_data_frame <- as.data.table(readRDS("Data/MS1_data_frame"))
 cat("Done\n")
 cat("Reading in MSMS data... ")
-MS2_data_frame <- readRDS("Data/MS2_data_frame")
+MS2_data_frame <- as.data.table(readRDS("Data/MS2_data_frame"))
 cat("Done\n")
 cat("Creating TIC... ")
 tic <- MS1_data_frame %>% mutate(rt=round(rt)) %>%
@@ -31,19 +32,18 @@ cat("Done\n")
 # Functions ----
 pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
 
-get_EIC <- function(MS1_data_frame, mass, ppm=5, 
-                    mdframe=falkor_metadata){
-  MS1_data_frame %>% 
-    filter(mz>min(pmppm(mass, ppm = ppm))&mz<max(pmppm(mass, ppm = ppm))) %>% 
+get_EIC <- function(MS1_data_frame, mass, ppm=5, mdframe=falkor_metadata){
+  req(mass)
+  MS1_data_frame[mz%between%pmppm(mass, ppm = ppm)] %>%
     group_by(fileid, rt) %>% 
     summarize(int=sum(int)) %>%
     left_join(mdframe, by="fileid")
 }
 
 get_Spectrum <- function(MS1_data_frame, scan, ret_window=1){
-  MS1_data_frame %>% 
-    filter(rt>scan-ret_window/2&rt<scan+ret_window/2) %>% 
-    mutate(mz=round(mz*1000)/1000) %>% # Round to group nearby scans
+  req(scan)
+  MS1_data_frame[rt%between%c(scan-ret_window/2, scan+ret_window/2)] %>%
+    #mutate(mz=round(mz*1000)/1000) %>% # Round to group nearby scans
     group_by(mz) %>% 
     summarize(TIS=sum(int))
 }
@@ -67,7 +67,6 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
              title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
                            collapse = " - "))
   } else {
-    
     plot_ly(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter", source="EIC",
             colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
