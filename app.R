@@ -53,7 +53,8 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
   if(plottic){
     tic$int <- (tic$int/max(tic$int))*max(eic$int)
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
+      add_trace(data = eic, x = ~rt, y = ~int,
+                color = ~get(plotby), alpha = 0.5,
                 mode="lines", type="scatter",
                 colors = setNames(c("red", "blue", "green"), 
                                   unique(eic[[plotby]]))) %>%
@@ -79,13 +80,10 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
 
 plotGivenSpectrum <- function(spectrum){
   plot_ly(source = "TIS") %>%
-    add_trace(data=spectrum, x=~mz, y=~TIS, type = "bar", 
-              marker=list(color="black"), hoverinfo="none") %>%
-    add_trace(data=spectrum, x=~mz, y=~TIS, marker=list(color="black"),
-              type = "scatter", mode="markers") %>%
+    add_trace(data=spectrum, x=~mz, y=~TIS, type = "scatter", 
+              mode="lines", line=list(color="black")) %>%
     layout(xaxis = list(title = "m/z"),
-           yaxis = list(title = "Intensity",
-                        fixedrange = TRUE))
+           yaxis = list(title = "Intensity"))
 }
 
 plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_frame){
