@@ -53,7 +53,7 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
   if(plottic){
     tic$int <- (tic$int/max(tic$int))*max(eic$int)
     plot_ly(source = "EIC") %>%
-      add_trace(data = eic, x = ~rt, y = ~int,
+      add_trace(data = eic, x = ~rt, y = ~int, text=~filenames,
                 color = ~get(plotby), alpha = 0.5,
                 mode="lines", type="scatter",
                 colors = setNames(c("red", "blue", "green"), 
@@ -67,7 +67,8 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
              title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
                            collapse = " - "))
   } else {
-    plot_ly(data = eic, x = ~rt, y = ~int, color = ~get(plotby), alpha = 0.5,
+    plot_ly(data = eic, x = ~rt, y = ~int, text=~filenames,
+            color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter", source="EIC",
             colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
