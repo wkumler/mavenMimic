@@ -70,7 +70,8 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
     plot_ly(data = eic, x = ~rt, y = ~int, text=~filenames,
             color = ~get(plotby), alpha = 0.5,
             mode="lines", type="scatter", source="EIC",
-            colors = setNames(c("red", "blue", "green"), unique(eic[[plotby]]))) %>%
+            colors = setNames(c("red", "blue", "green"), 
+                              unique(eic[[plotby]]))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"),
              title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
