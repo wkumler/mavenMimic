@@ -37,15 +37,15 @@ grabSingleFileMS2 <- function(filename){
 }
 
 # Metadata ----
-sample_files <- normalizePath(list.files("falkor_mzMLs", pattern = "Smp|Blk", 
+sample_files <- normalizePath(list.files("falkor_mzMLs", pattern = "Smp|Blk|Std", 
                                          full.names = TRUE))
 
 metadframe <- data.frame(
-  fileid=1:25, 
+  fileid=seq_along(sample_files), 
   filenames=basename(sample_files),
-  depth=c("Blank", "DCM", "25m")[c(1, ceiling(1:24/3)%%2+2)],
-  spindir=c("Blank", "Cyclone", "Anticyclone")[c(1, (1-ceiling(1:24/12)%%2)+2)],
-  time=c("Blank", "Morning", "Afternoon")[c(1, ceiling(1:24/6)%%2+2)]
+  depth=c("Blank", "DCM", "25m", "Std")[c(1, ceiling(1:24/3)%%2+2, rep(4, 10))],
+  spindir=c("Blank", "Cyclone", "Anticyclone", "Std")[c(1, (1-ceiling(1:24/12)%%2)+2, rep(4, 10))],
+  time=c("Blank", "Morning", "Afternoon", "Std")[c(1, ceiling(1:24/6)%%2+2, rep(4, 10))]
 )
 write.csv(metadframe, "Data/falkor_metadata.csv", row.names = FALSE)
 
@@ -72,7 +72,7 @@ saveRDS(raw_msmsdata, file = "Data/MS2_data_frame")
 stans <- read.csv(paste0("https://raw.githubusercontent.com/kheal/Example_Unta",
                          "rgeted_Metabolomics_Workflow/master/Ingalls_Lab_Stan",
                          "dards.csv"))
-clean_stans <- stans %>% filter(Column=="HILIC") %>% 
-  select(c(Compound.Type, Compound.Name, Emperical.Formula, RT..min., 
-           m.z, ionization_form, Fraction1))
+clean_stans <- subset(stans, stans$Column=="HILIC")
+clean_stans <- clean_stans[c("Compound.Type", "Compound.Name", "Emperical.Formula",
+                             "RT..min.", "m.z", "ionization_form", "Fraction1")]
 write.csv(x = clean_stans, file = "Data/falkor_stans.csv")
