@@ -37,22 +37,21 @@ grabSingleFileMS2 <- function(filename){
 }
 
 # Metadata ----
-sample_files <- normalizePath(list.files("falkor_mzMLs", pattern = "Smp|Blk|Std", 
+sample_files <- normalizePath(list.files("falkor_mzMLs", pattern = "Smp|Blk", 
                                          full.names = TRUE))
 
 metadframe <- data.frame(
-  fileid=seq_along(sample_files), 
-  filenames=basename(sample_files),
-  depth=c("Blank", "DCM", "25m", "Std")[c(1, ceiling(1:24/3)%%2+2, rep(4, 10))],
-  spindir=c("Blank", "Cyclone", "Anticyclone", "Std")[c(1, (1-ceiling(1:24/12)%%2)+2, rep(4, 10))],
-  time=c("Blank", "Morning", "Afternoon", "Std")[c(1, ceiling(1:24/6)%%2+2, rep(4, 10))]
+  fileid=basename(sample_files),
+  depth=c("Blank", "DCM", "25m", "Std")[c(1, ceiling(1:24/3)%%2+2)],
+  spindir=c("Blank", "Cyclone", "Anticyclone", "Std")[c(1, (1-ceiling(1:24/12)%%2)+2)],
+  time=c("Blank", "Morning", "Afternoon", "Std")[c(1, ceiling(1:24/6)%%2+2)]
 )
 write.csv(metadframe, "Data/falkor_metadata.csv", row.names = FALSE)
 
 # Grab the actual data and clean up a little ----
 raw_data <- pblapply(sample_files, grabSingleFileData)
-raw_data <- lapply(seq_along(raw_data), function(x){
-  cbind(fileid=x, raw_data[[x]])
+raw_data <- pblapply(seq_along(raw_data), function(x){
+  cbind(fileid=basename(sample_files)[x], raw_data[[x]])
 })
 raw_data <- do.call(rbind, raw_data)
 raw_data <- raw_data[raw_data$rt>60&raw_data$rt<1100,]
