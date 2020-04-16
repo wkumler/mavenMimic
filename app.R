@@ -56,7 +56,7 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
       add_trace(data = eic, x = ~rt, y = ~int, text=~fileid,
                 color = ~get(plotby), alpha = 0.5,
                 mode="lines", type="scatter",
-                colors = setNames(c("red", "blue", "green"), 
+                colors = setNames(c("red", "blue", "green", "black"), 
                                   unique(eic[[plotby]]))) %>%
       add_trace(data = tic, x=~rt, y=~int, 
                 mode="lines", type="scatter", 
