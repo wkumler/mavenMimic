@@ -6,6 +6,9 @@ library(dplyr)
 library(plotly)
 library(data.table)
 
+addisos <- c(H=1.007276, Na=22.98977, K=38.963158, NH4=18.033823,
+             C13=1.003355, N15=0.997035, O18=2.004244, S34=1.995796)
+
 cat("Reading in raw data... ")
 MS1_data_frame <- as.data.table(readRDS("Data/MS1_data_frame"))
 cat("Done\n")
@@ -141,6 +144,21 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_f
   subplot(pls, shareX = TRUE, nrows = length(pls))
 }
 
+makeAddTable <- function(named_vec){
+  header <- paste0("<th>", names(named_vec), "</th>", collapse = "")
+  header <- paste0("<tr><th>Action</th>", header, "</tr>")
+  addrow <- paste0("<a href='#' onclick='detect_click(this)'>+", named_vec)
+  addrow <- paste0("<td>", addrow, "</td>", collapse = "")
+  addrow <- paste0("<tr><td>Add</th>", addrow, "</tr>")
+  rmrow <- paste0("<a href='#' onclick='detect_click(this)'>", named_vec*-1)
+  rmrow <- paste0("<td>", rmrow, "</td>", collapse = "")
+  rmrow <- paste0("<tr><td>Remove</th>", rmrow, "</tr>")
+  paste0('<table style="width:100%">', 
+         header, addrow, rmrow,
+         "</table>")
+}
+
+
 
 # UI ----
 ui <- fluidPage(
@@ -172,9 +190,11 @@ ui <- fluidPage(
         ),
 
         mainPanel(
+          htmlOutput("adduct_table"),
           plotlyOutput(outputId = "chrom", height = "300px"),
           plotlyOutput(outputId = "TIS", height = "300px"),
-          plotlyOutput(outputId = "MSMS", height = "300px")
+          plotlyOutput(outputId = "MSMS", height = "300px"),
+          includeScript("detect_click.js")
         )
     )
 )
@@ -192,9 +212,13 @@ server <- function(input, output, session) {
     stan_mass <- stans_csv$m.z[stans_csv$Compound.Name==input$given_stan]
     current_mass(as.numeric(as.character(stan_mass)))
   })
+  observeEvent(input$clicked_text, {
+    current_mass(current_mass()+as.numeric(input$clicked_text))
+  })
   observeEvent(current_mass(), {
     updateNumericInput(session, "given_mz", value = current_mass())
   })
+  
   
   
   given_EIC <- reactive({
@@ -209,6 +233,10 @@ server <- function(input, output, session) {
     req(EIC_data)
     get_Spectrum(MS1_data_frame = MS1_data_frame, scan=EIC_data$x)
   })
+  
+  
+  
+  output$adduct_table <- renderUI(HTML(makeAddTable(addisos)))
   
   output$chrom <- renderPlotly({
     plotGivenEIC(eic = given_EIC(), 
