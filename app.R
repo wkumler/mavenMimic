@@ -146,13 +146,13 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_f
 
 makeAddTable <- function(named_vec){
   header <- paste0("<th>", names(named_vec), "</th>", collapse = "")
-  header <- paste0("<tr><th>Action</th>", header, "</tr>")
+  header <- paste0("<tr>", header, "</tr>")
   addrow <- paste0("<a href='#' onclick='detect_click(this)'>+", named_vec)
   addrow <- paste0("<td>", addrow, "</td>", collapse = "")
-  addrow <- paste0("<tr><td>Add</th>", addrow, "</tr>")
+  addrow <- paste0("<tr>", addrow, "</tr>")
   rmrow <- paste0("<a href='#' onclick='detect_click(this)'>", named_vec*-1)
   rmrow <- paste0("<td>", rmrow, "</td>", collapse = "")
-  rmrow <- paste0("<tr><td>Remove</th>", rmrow, "</tr>")
+  rmrow <- paste0("<tr>", rmrow, "</tr>")
   paste0('<table style="width:100%">', 
          header, addrow, rmrow,
          "</table>")
