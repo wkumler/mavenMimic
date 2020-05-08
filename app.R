@@ -67,8 +67,9 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
                 name="TIC") %>%
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"),
-             title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
-                           collapse = " - "))
+             title = list(text=paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
+                                     collapse = " - "),
+                          x=0.07))
   } else {
     plot_ly(data = eic, x = ~rt, y = ~int, text=~fileid,
             color = ~get(plotby), alpha = 0.5,
@@ -77,8 +78,9 @@ plotGivenEIC <- function(eic, plotby="depth", plottic=TRUE, tic=NULL,
                               unique(eic[[plotby]]))) %>%
       layout(xaxis = list(title = "Retention time (s)"),
              yaxis = list(title = "Intensity"),
-             title = paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
-                           collapse = " - "))
+             title = list(text=paste(round(pmppm(current_mass, ppm = ppm), digits = 4), 
+                                     collapse = " - "),
+                          x=0.07))
   }
 }
 
@@ -87,7 +89,11 @@ plotGivenSpectrum <- function(spectrum){
     add_trace(data=spectrum, x=~mz, y=~TIS, type = "scatter", 
               mode="lines", line=list(color="black")) %>%
     layout(xaxis = list(title = "m/z"),
-           yaxis = list(title = "Intensity"))
+           yaxis = list(title = "Intensity"),
+           title = list(
+             text="TIS",
+             x = 0.1
+           ))
 }
 
 plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_frame){
@@ -190,11 +196,12 @@ ui <- fluidPage(
           htmlOutput("adduct_table"),
           h3(),
           plotlyOutput(outputId = "chrom", height = "300px"),
+          h3(),
           fluidRow(
             splitLayout(
               cellWidths = c("49%", "49%"), 
-              plotlyOutput(outputId = "TIS", height = "300px"), 
-              plotlyOutput(outputId = "MSMS", height = "300px")
+              plotlyOutput(outputId = "TIS", height = "250px"), 
+              plotlyOutput(outputId = "MSMS", height = "250px")
             )
           ),
           includeScript("detect_click.js")
