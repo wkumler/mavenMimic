@@ -10,14 +10,14 @@ addisos <- c(H=1.007276, Na=22.98977, K=38.963158, NH4=18.033823,
              C13=1.003355, N15=0.997035, O18=2.004244, S34=1.995796)
 
 cat("Reading in raw data... ")
-# MS1_data_frame <- as.data.table(readRDS("Data/MS1_data_frame"))
+MS1_data_frame <- as.data.table(readRDS("Data/MS1_data_frame"))
 cat("Done\n")
 cat("Reading in MSMS data... ")
 MS2_data_frame <- as.data.table(readRDS("Data/MS2_data_frame"))
 cat("Done\n")
 cat("Creating TIC... ")
-# tic <- MS1_data_frame %>% mutate(rt=round(rt)) %>%
-#   group_by(rt) %>% summarize(int=sum(int))
+tic <- MS1_data_frame %>% mutate(rt=round(rt)) %>%
+  group_by(rt) %>% summarize(int=sum(int))
 cat("Done\n")
 cat("Reading in metadata... ")
 falkor_metadata <- read.csv("Data/falkor_metadata.csv")
