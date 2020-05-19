@@ -30,6 +30,7 @@ stans_namelist <- split(stans_csv, stans_csv$Fraction1) %>%
   `names<-`(c("Negative mode", "Positive mode")) %>%
   `[`(c(2,1))
 cat("Done\n")
+browseURL("http://127.0.0.1:1337/")
 
 
 # Functions ----
