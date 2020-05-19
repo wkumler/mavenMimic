@@ -37,15 +37,20 @@ grabSingleFileMS2 <- function(filename){
 }
 
 # Metadata ----
-sample_files <- normalizePath(list.files("falkor_mzMLs", pattern = "Smp|Blk", 
-                                         full.names = TRUE))
+sample_files <- list.files("falkor_mzMLs", pattern = "Smp|Blk", full.names = TRUE)
+sample_files <- normalizePath(sample_files[sample_files!="falkor_mzMLs/190715_Blk_KM1906U14-Blk_C.mzML"])
 
 metadframe <- data.frame(
   fileid=basename(sample_files),
-  depth=c("Blank", "DCM", "25m", "Std")[c(1, ceiling(1:24/3)%%2+2)],
-  spindir=c("Blank", "Cyclone", "Anticyclone", "Std")[c(1, (1-ceiling(1:24/12)%%2)+2)],
-  time=c("Blank", "Morning", "Afternoon", "Std")[c(1, ceiling(1:24/6)%%2+2)]
+  depth=regmatches(regexpr(pattern = "Blk|DCM|25m", sample_files), x = sample_files),
+  station=regmatches(regexpr(pattern = "Blk|S62|S64|S77|S80", sample_files), x = sample_files)
 )
+station_spindirs <- c(Blk="Blank", S62="Cyclone", S64="Cyclone", 
+                      S77="Anticyclone", S80="Anticyclone")
+metadframe$spindir=station_spindirs[metadframe$station]
+station_times <- c(Blk="Blank", S62="Morning", S64="Afternoon", 
+                   S77="Morning", S80="Afternoon")
+metadframe$time=station_times[metadframe$station]
 write.csv(metadframe, "Data/falkor_metadata.csv", row.names = FALSE)
 
 # Grab the actual data and clean up a little ----
