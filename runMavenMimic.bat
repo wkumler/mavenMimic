@@ -1,1 +1,1 @@
-start "" "C:\Program Files\R\R-4.0.0\bin\Rscript.exe" "G:\My Drive\mavenMimic\app.R"
+start "" "Rscript.exe" "%~dp0\app.R"
