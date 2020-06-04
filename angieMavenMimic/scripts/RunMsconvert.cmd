@@ -1,0 +1,1 @@
+msconvert Z:\1_QEdata\LTC\DATA\HILIC\200226_Angie_DSS3_GBT\200226_Smp_??_?.raw --mzML --filter "peakPicking true 1-" --filter "polarity positive" -z -o ../Data/

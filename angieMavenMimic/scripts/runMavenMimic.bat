@@ -1,0 +1,1 @@
+start "" "Rscript.exe" "%~dp0\app.R"

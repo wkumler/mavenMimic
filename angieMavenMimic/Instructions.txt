@@ -1,0 +1,8 @@
+1. Make sure the network drive is mapped: use the Z: label for it or edit scripts/RunMsconvert.cmd to the appropriate path
+	This converts the .raw files from the QE network drive to local .mzMLs
+2. Run scripts/makeRawData.R
+	This converts the .mzML files into an R object (.rds format) by opening them one at a time and writing out just the relevant data
+3. Run the app! Either with the "Run App" shortcut in the "runMavenMimic.bat" in scripts/
+	This runs the R code in app.R via an R script rather than in RStudio
+
+The data will be written to Data/ no matter where the folder stored
