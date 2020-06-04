@@ -101,7 +101,8 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_f
   frags <- dataframe %>% 
     filter(premz>min(pmppm(mass, ppm = ppm))) %>%
     filter(premz<max(pmppm(mass, ppm = ppm))) %>%
-    filter(rt>ret_time-ret_win&rt<ret_time+ret_win)
+    filter(rt>ret_time-ret_win&rt<ret_time+ret_win) %>%
+    arrange(fragmz)
   if(!nrow(frags)){
     empty_plot_ly <- plot_ly(x=ret_time, y=mass, 
                              text="No data for any voltage here",
@@ -126,7 +127,9 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_f
     })
     pl <- plot_ly(source = "MSMS") %>%
       add_trace(data = frags2plot, x=~fragmz, y=~int,
-                mode="markers", type="scatter", marker=list(color="#00000000")) %>%
+                mode="lines+markers", type="scatter", 
+                marker=list(color="#000000FF"),
+                line=list(color="#000000FF")) %>%
       layout(xaxis = list(title = "m/z", range=c(0, max(frags2plot$fragmz)+5)),
              yaxis = list(title = "Intensity", range=c(0, 120)),
              shapes = frag_lines,
