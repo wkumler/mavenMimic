@@ -99,8 +99,7 @@ plotGivenSpectrum <- function(spectrum){
 
 plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_frame){
   frags <- dataframe %>% 
-    filter(premz>min(pmppm(mass, ppm = ppm))) %>%
-    filter(premz<max(pmppm(mass, ppm = ppm))) %>%
+    filter(premz%between%pmppm(mass, ppm = ppm)) %>%
     filter(rt>ret_time-ret_win&rt<ret_time+ret_win) %>%
     arrange(fragmz)
   if(!nrow(frags)){
@@ -154,6 +153,14 @@ plotMSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_f
   subplot(pls, shareX = TRUE, nrows = length(pls))
 }
 
+data_MSMS <- function(mass, ret_time = 1, ppm=5, ret_win=20, dataframe=MS2_data_frame){
+  dataframe %>% 
+    filter(premz>min(pmppm(mass, ppm = ppm))) %>%
+    filter(premz<max(pmppm(mass, ppm = ppm))) %>%
+    filter(rt>ret_time-ret_win&rt<ret_time+ret_win) %>%
+    arrange(fragmz)
+}
+
 makeAddTable <- function(named_vec){
   header <- paste0("<th>", names(named_vec), "</th>", collapse = "")
   header <- paste0("<tr>", header, "</tr>")
@@ -171,47 +178,62 @@ makeAddTable <- function(named_vec){
 
 
 # UI ----
-ui <- fluidPage(
-    titlePanel("mavenMimic"),
-    sidebarLayout(
-        sidebarPanel(
-            numericInput(inputId = "given_mz",
-                        "m/z:",
-                        value = 118.0868),
-            numericInput(inputId = "given_ppm",
-                         "+/- (ppm)",
-                         value = 5),
-            radioButtons(inputId = "treatment", 
-                         label = "Color by which?", 
-                         selected = "depth", 
-                         choiceNames = c("Depth", "Spin direction", "Time"),
-                         choiceValues = c("depth", "spindir", "time")),
-            checkboxInput(inputId = "user_plottic",
-                          label = "Plot a TIC on the graph?",
-                          value = TRUE),
-            selectInput(inputId = "given_stan", 
-                        label = "Choose a standard:", 
-                        choices = stans_namelist, 
-                        #selectize = TRUE, 
-                        selected = "Betaine")
-        ),
-
-        mainPanel(
-          htmlOutput("adduct_table"),
-          h3(),
-          plotlyOutput(outputId = "chrom", height = "300px"),
-          h3(),
-          fluidRow(
-            splitLayout(
-              cellWidths = c("49%", "49%"), 
-              plotlyOutput(outputId = "TIS", height = "250px"), 
-              plotlyOutput(outputId = "MSMS", height = "250px")
-            )
-          ),
-          includeScript("detect_click.js")
-        )
+ui <- navbarPage(
+  title = "Maven Mimic",
+  tabPanel(title = "Exploration",
+           sidebarLayout(
+             sidebarPanel(
+               numericInput(inputId = "given_mz",
+                            "m/z:",
+                            value = 118.0868),
+               numericInput(inputId = "given_ppm",
+                            "+/- (ppm)",
+                            value = 5),
+               radioButtons(inputId = "treatment",
+                            label = "Color by which?",
+                            selected = "depth",
+                            choiceNames = c("Depth", "Spin direction", "Time"),
+                            choiceValues = c("depth", "spindir", "time")),
+               checkboxInput(inputId = "user_plottic",
+                             label = "Plot a TIC on the graph?",
+                             value = TRUE),
+               selectInput(inputId = "given_stan",
+                           label = "Choose a standard:",
+                           choices = stans_namelist,
+                           #selectize = TRUE,
+                           selected = "Betaine")
+             ),
+             
+             mainPanel(
+               htmlOutput("adduct_table"),
+               h3(),
+               plotlyOutput(outputId = "chrom", height = "300px"),
+               h3(),
+               fluidRow(
+                 splitLayout(
+                   cellWidths = c("49%", "49%"),
+                   plotlyOutput(outputId = "TIS", height = "250px"),
+                   plotlyOutput(outputId = "MSMS", height = "250px")
+                 )
+               ),
+               includeScript("detect_click.js")
+             )
+           )
+         ),
+  tabPanel(
+    title = "Export",
+    verticalLayout(
+      h3("Chromatogram data"),
+      verbatimTextOutput("export_chrom"),
+      h3("TIS data"),
+      verbatimTextOutput("export_spectrum"),
+      h3("MS2 data"),
+      verbatimTextOutput("export_MSMS")
     )
+  )
 )
+
+
 
 # Server ----
 server <- function(input, output, session) {
@@ -271,6 +293,25 @@ server <- function(input, output, session) {
     plotMSMS(mass = current_mass(), ret_time = EIC_data$x, 
              ppm = input$given_ppm, ret_win = 20,
              dataframe = MS2_data_frame)
+  })
+  
+  output$export_chrom <- renderPrint({
+    dput(get_EIC(MS1_data_frame = MS1_data_frame, 
+                 mass = current_mass(), 
+                 ppm = input$given_ppm, 
+                 mdframe = falkor_metadata))
+  })
+  output$export_spectrum <- renderPrint({
+    EIC_data <- event_data(event = "plotly_click", source = "EIC")
+    req(EIC_data)
+    dput(get_Spectrum(MS1_data_frame = MS1_data_frame, scan=EIC_data$x))
+  })
+  output$export_MSMS <- renderPrint({
+    EIC_data <- event_data(event = "plotly_click", source = "EIC")
+    req(EIC_data)
+    dput(data_MSMS(mass = current_mass(), ret_time = EIC_data$x, 
+              ppm = input$given_ppm, ret_win = 20,
+              dataframe = MS2_data_frame))
   })
 }
 
