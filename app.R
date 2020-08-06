@@ -5,6 +5,7 @@ library(shiny)
 library(dplyr)
 library(plotly)
 library(data.table)
+options(dplyr.summarise.inform=F)
 
 addisos <- c(H=1.007276, Na=22.98977, K=38.963158, NH4=18.033823,
              C13=1.003355, N15=0.997035, O18=2.004244, S34=1.995796)
